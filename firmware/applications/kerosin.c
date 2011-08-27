@@ -12,6 +12,10 @@ volatile unsigned int lastTick;
 #include "core/usbcdc/cdc_buf.h"
 #endif
 
+#ifdef CFG_INTERFACE_UART
+	#include "core/uart/uart.h"
+#endif
+
 void main_kerosin(void) {
 
 	uint8_t enterCnt = 0;
@@ -26,6 +30,12 @@ void main_kerosin(void) {
 		
     DoString(2,5,"USB");
 	
+#ifdef CFG_INTERFACE_UART
+	uartInit(CFG_UART_BAUDRATE);
+	DoString(40,5,"UART");
+	uartSend("Hallo", 5);
+#endif
+
 	// Initialise USB CDC
 #ifdef CFG_USBCDC
     DoString(10, 15, "USBCDC");

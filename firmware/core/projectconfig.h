@@ -82,9 +82,8 @@
     #define CFG_USBCDC_INITTIMEOUT      (5000)
     #define CFG_USBCDC_BUFFERSIZE       (256)
 
-#if 0
+
 /* you will need these for the UART */
-#define CFG_INTERFACE_UART (0)
+#define CFG_INTERFACE_UART (1)
 #define CFG_UART_BAUDRATE           (115200)
 #define CFG_UART_BUFSIZE            (512)
-#endif
