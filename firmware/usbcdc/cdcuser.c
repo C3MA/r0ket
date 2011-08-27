@@ -31,8 +31,8 @@
 
 // unsigned char BulkBufIn  [64];            // Buffer to store USB IN  packet
 unsigned char BulkBufOut [BULK_BUF_OUT_MAX];            // Buffer to store USB OUT packet
-int BulkBufOutNumBytesRead;
-uint8_t BulkBufOutIndex = 0;
+uint8_t BulkBufOutStart = 0;
+uint8_t BulkBufOutEnd = 0;
 
 unsigned char NotificationBuf [10];
 
@@ -314,9 +314,9 @@ void CDC_BulkOut(void)
 {
   int read;
   // get data from USB into intermediate buffer
-  read = USB_ReadEP(CDC_DEP_OUT, &BulkBufOut[BulkBufOutIndex]);
-  BulkBufOutIndex += read;
-  BulkBufOutNumBytesRead += read;	
+  read = USB_ReadEP(CDC_DEP_OUT, &BulkBufOut[BulkBufOutEnd]);
+  BulkBufOutEnd += read;
+	
 //FIXME handle data, larger than buffer! ... BULK_BUF_OUT_MAX
 	
   // ... add code to check for overwrite
@@ -331,12 +331,25 @@ void CDC_BulkOut(void)
 extern int CDC_GetInputBuffer(char *buffer, int bufferLength)
 {
 	int i;
-	if (BulkBufOutNumBytesRead > 0) {
-		for (i=0; i < BulkBufOutNumBytesRead && i < bufferLength; i++) {
-			buffer[i] = BulkBufOut[i];
+	if ((BulkBufOutEnd - BulkBufOutStart) > 0)
+	{
+		for (i=0; i < (BulkBufOutEnd - BulkBufOutStart) && i < bufferLength; i++)
+		{
+			buffer[i] = BulkBufOut[BulkBufOutStart + i];
 		}
-		BulkBufOutNumBytesRead -= i;
-		BulkBufOutIndex -= i;
+		
+		/* use i as temporary variable for the length of read bytes */
+		i = (BulkBufOutEnd - BulkBufOutStart);
+		BulkBufOutStart += i;
+		
+		
+		/* if buffer was read complete... reset both indices */
+		if (BulkBufOutStart == BulkBufOutEnd)
+		{
+			BulkBufOutStart = 0;
+			BulkBufOutEnd = 0;
+		}
+		
 		return i;
 	} else {
 		return -1;
