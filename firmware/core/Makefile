@@ -22,8 +22,8 @@ OBJS += ssp/ssp.o
 OBJS += systick/systick.o
 #OBJS += timer16/timer16.o
 OBJS += timer32/timer32.o
-OBJS += uart/uart.o
-OBJS += uart/uart_buf.o
+#OBJS += uart/uart.o
+#OBJS += uart/uart_buf.o
 OBJS += wdt/wdt.o
 
 ##########################################################################
