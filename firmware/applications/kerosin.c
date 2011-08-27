@@ -12,6 +12,10 @@ volatile unsigned int lastTick;
 #include "core/usbcdc/cdc_buf.h"
 #endif
 
+#ifdef CFG_INTERFACE_UART
+	#include "core/uart/uart.h"
+#endif
+
 void main_kerosin(void) {
 
 	uint8_t enterCnt = 0;
@@ -24,7 +28,13 @@ void main_kerosin(void) {
 	adcInit();                                // Config adc pins to save power
 	lcdInit();
 		
-    DoString(10,5,"USB plug");
+    DoString(2,5,"USB");
+	
+#ifdef CFG_INTERFACE_UART
+	uartInit(CFG_UART_BAUDRATE);
+	DoString(40,5,"UART");
+	uartSend("Hallo", 5);
+#endif
 
 	// Initialise USB CDC
 #ifdef CFG_USBCDC
@@ -57,6 +67,7 @@ void main_kerosin(void) {
 		switch (getInput()) {
 			case BTN_ENTER:
 				enterCnt++;
+				/* This is debug code */
 				puts("ENTER\t");
 				buffer[0] = '0' + enterCnt;
 				buffer[1] = 0;
@@ -69,8 +80,8 @@ void main_kerosin(void) {
 				readData = CDC_GetInputBuffer(buffer, sizeof(buffer));
 				
 				DoString(5, 40, buffer);
-				DoString(1, 50, "Received: ");
-				DoInt(57, 50, readData);
+				DoString(1, 50, "RX-Cnt:");
+				DoInt(60, 50, readData);
 				lcdDisplay();
 				break;
 			default:

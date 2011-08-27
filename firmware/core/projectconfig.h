@@ -84,8 +84,6 @@
 
 
 /* you will need these for the UART */
-#if 0
 #define CFG_INTERFACE_UART (1)
 #define CFG_UART_BAUDRATE           (115200)
 #define CFG_UART_BUFSIZE            (512)
-#endif

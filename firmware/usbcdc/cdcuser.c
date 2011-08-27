@@ -316,10 +316,8 @@ void CDC_BulkOut(void)
   // get data from USB into intermediate buffer
   read = USB_ReadEP(CDC_DEP_OUT, &BulkBufOut[BulkBufOutIndex]);
   BulkBufOutIndex += read;
-	
-  BulkBufOutNumBytesRead += read;
-	
-//FIXME handle data, larger than buffer ... ringbuffer! 	BULK_BUF_OUT_MAX
+  BulkBufOutNumBytesRead += read;	
+//FIXME handle data, larger than buffer! ... BULK_BUF_OUT_MAX
 	
   // ... add code to check for overwrite
 
