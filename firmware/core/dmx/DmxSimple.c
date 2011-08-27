@@ -180,7 +180,11 @@ ISR(TIMER2_OVF_vect,ISR_NOBLOCK) {
 	TIMER2_INTERRUPT_ENABLE();
 }
 
-void dmxWrite(int channel, uint8_t value) {
+/** Write to a DMX channel
+ * @param address DMX address in the range 1 - 512
+ */
+extern void dmx_write(int address, uint8_t value)
+{
 	if (!dmxStarted) dmxBegin();
 	if ((channel > 0) && (channel <= DMX_SIZE)) {
 		if (value<0) value=0;
@@ -190,7 +194,10 @@ void dmxWrite(int channel, uint8_t value) {
 	}
 }
 
-void dmxMaxChannel(int channel) {
+/** Set DMX maximum channel
+ * @param channel The highest DMX channel to use
+ */
+extern void dmx_maxChannel(int channel) {
 	if (channel <=0) {
 		// End DMX transmission
 		dmxEnd();
@@ -201,14 +208,10 @@ void dmxMaxChannel(int channel) {
 	}
 }
 
-
-/* C++ wrapper */
-
-
 /** Set output pin
  * @param pin Output digital pin to use
  */
-void DmxSimpleClass::usePin(uint8_t pin) {
+extern void dmx_usePin(uint8_t pin) {
 	dmxPin = pin;
 	if (dmxStarted && (pin != dmxPin)) {
 		dmxEnd();
@@ -216,18 +219,4 @@ void DmxSimpleClass::usePin(uint8_t pin) {
 	}
 }
 
-/** Set DMX maximum channel
- * @param channel The highest DMX channel to use
- */
-void DmxSimpleClass::maxChannel(int channel) {
-	dmxMaxChannel(channel);
-}
 
-/** Write to a DMX channel
- * @param address DMX address in the range 1 - 512
- */
-void DmxSimpleClass::write(int address, uint8_t value)
-{
-	dmxWrite(address, value);
-}
-DmxSimpleClass DmxSimple;
