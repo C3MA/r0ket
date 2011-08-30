@@ -16,6 +16,19 @@ volatile unsigned int lastTick;
 	#include "core/uart/uart.h"
 #endif
 
+/* Use the 16bit timer for the DMX signal generation */
+#include "core/cpu/cpu.h"
+
+void TIMER16_0_IRQHandler(void){
+	TMR_TMR16B0IR = TMR_TMR16B0IR_MR0;
+	static int time=0;
+	if (time==0){time=1;} else {time=0;}
+	gpioSetValue (RB_LED2, time);
+	gpioSetValue(RB_SPI_SS0, time);
+};
+void backlightInit(void);
+
+
 void main_kerosin(void) {
 
 	uint8_t enterCnt = 0;
@@ -29,10 +42,24 @@ void main_kerosin(void) {
 	lcdInit();
 		
     DoString(2,5,"USB");
+	
 	gpioSetDir(RB_SPI_SS0, gpioDirection_Output);
+	gpioSetDir(RB_LED2, gpioDirection_Output);
 	
-	gpioSetValue(RB_SPI_SS0, 0);
+	/*--- SETUP the 16bit TIMER ---*/
+	/* Enable the clock for CT16B0 */
+    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT16B0);
+	TMR_TMR16B0MR0 = (72E6/5E3)/2; //timer einschalten, auf 5kHz(?) setzen 
 	
+    /* Configure match control register to raise an interrupt and reset on MR0 */
+    TMR_TMR16B0MCR = (TMR_TMR16B0MCR_MR0_INT_ENABLED | TMR_TMR16B0MCR_MR0_RESET_ENABLED);
+	
+    /* Enable the TIMER0 interrupt */
+    NVIC_EnableIRQ(TIMER_16_0_IRQn);
+	
+	/* ENABLE the 16bit timer */
+	TMR_TMR16B0TCR = TMR_TMR16B0TCR_COUNTERENABLE_ENABLED;
+	DoString(1, 50, "Time enabled!");
 	
 #ifdef CFG_INTERFACE_UART
 	uartInit(CFG_UART_BAUDRATE);
@@ -88,19 +115,11 @@ void main_kerosin(void) {
 				DoInt(60, 50, readData);
 				lcdDisplay();
 				break;
-			case BTN_DOWN:
-				toggle = !toggle;
-				gpioSetValue(RB_SPI_SS0, toggle);
-				DoString(1, 50, "Toggle:          ");
-				DoInt(45, 50, toggle);
-				lcdDisplay();				
-				break;
 			default:
 				break;
 		}		
 	}
 }
-
 
 #ifdef CFG_USBCDC
 /**************************************************************************/
