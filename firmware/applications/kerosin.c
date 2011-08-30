@@ -29,6 +29,10 @@ void main_kerosin(void) {
 	lcdInit();
 		
     DoString(2,5,"USB");
+	gpioSetDir(RB_SPI_SS0, gpioDirection_Output);
+	
+	gpioSetValue(RB_SPI_SS0, 0);
+	
 	
 #ifdef CFG_INTERFACE_UART
 	uartInit(CFG_UART_BAUDRATE);
@@ -62,6 +66,7 @@ void main_kerosin(void) {
 
 	
 	int readData;
+	int toggle=0;
     while (1) {
 				
 		switch (getInput()) {
@@ -77,12 +82,18 @@ void main_kerosin(void) {
 				lcdDisplay();				
 				break;
 			case BTN_LEFT:
-				readData = CDC_GetInputBuffer(buffer, sizeof(buffer));
-				
+				readData = CDC_GetInputBuffer(buffer, sizeof(buffer));				
 				DoString(5, 40, buffer);
 				DoString(1, 50, "RX-Cnt:");
 				DoInt(60, 50, readData);
 				lcdDisplay();
+				break;
+			case BTN_DOWN:
+				toggle = !toggle;
+				gpioSetValue(RB_SPI_SS0, toggle);
+				DoString(1, 50, "Toggle:          ");
+				DoInt(45, 50, toggle);
+				lcdDisplay();				
 				break;
 			default:
 				break;
