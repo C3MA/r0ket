@@ -16,18 +16,20 @@ volatile unsigned int lastTick;
 	#include "core/uart/uart.h"
 #endif
 
+
 /* Use the 16bit timer for the DMX signal generation */
 #include "core/cpu/cpu.h"
 
-void TIMER16_0_IRQHandler(void){
-	TMR_TMR16B0IR = TMR_TMR16B0IR_MR0;
+
+void TIMER32_0_IRQHandler(void)
+{  	
+	/* Clear the interrupt flag */
+	TMR_TMR32B0IR = TMR_TMR32B0IR_MR0;
 	static int time=0;
 	if (time==0){time=1;} else {time=0;}
 	gpioSetValue (RB_LED2, time);
 	gpioSetValue(RB_SPI_SS0, time);
 };
-void backlightInit(void);
-
 
 void main_kerosin(void) {
 
@@ -37,29 +39,11 @@ void main_kerosin(void) {
 //	cpuInit();                                // Configure the CPU
 	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
 	gpioInit();                               // Enable GPIO
-	pmuInit();                                // Configure power management
+//	pmuInit();                                // Configure power management
 	adcInit();                                // Config adc pins to save power
 	lcdInit();
 		
-    DoString(2,5,"USB");
-	
-	gpioSetDir(RB_SPI_SS0, gpioDirection_Output);
-	gpioSetDir(RB_LED2, gpioDirection_Output);
-	
-	/*--- SETUP the 16bit TIMER ---*/
-	/* Enable the clock for CT16B0 */
-    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT16B0);
-	TMR_TMR16B0MR0 = (72E6/5E3)/2; //timer einschalten, auf 5kHz(?) setzen 
-	
-    /* Configure match control register to raise an interrupt and reset on MR0 */
-    TMR_TMR16B0MCR = (TMR_TMR16B0MCR_MR0_INT_ENABLED | TMR_TMR16B0MCR_MR0_RESET_ENABLED);
-	
-    /* Enable the TIMER0 interrupt */
-    NVIC_EnableIRQ(TIMER_16_0_IRQn);
-	
-	/* ENABLE the 16bit timer */
-	TMR_TMR16B0TCR = TMR_TMR16B0TCR_COUNTERENABLE_ENABLED;
-	DoString(1, 50, "Time enabled!");
+    DoString(2,5,"USB");	
 	
 #ifdef CFG_INTERFACE_UART
 	uartInit(CFG_UART_BAUDRATE);
@@ -90,8 +74,31 @@ void main_kerosin(void) {
 	
 	DoString(10, 25, "Enter:");
 	lcdDisplay();
-
+#if 0
+	/* ---------------------------------------------- */	
+	gpioSetDir(RB_SPI_SS0, gpioDirection_Output);
+	gpioSetDir(RB_LED2, gpioDirection_Output);
 	
+	
+	/*--- SETUP the 32bit TIMER ---*/
+    /* Enable the clock for CT32B0 */
+    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
+	
+    TMR_TMR32B0MR0 = 144; //set timer to 250kHz theory: 144=(72E6/250E3)/2
+	
+    /* Configure match control register to raise an interrupt and reset on MR0 */
+    TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
+	
+    /* Enable the TIMER0 interrupt */
+    NVIC_EnableIRQ(TIMER_32_0_IRQn);
+	
+	/* ENABLE the 32bit timer */
+	TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
+	
+	DoString(1, 50, "Time enabled!");
+	lcdDisplay();
+	/* ---------------------------------------------- */
+#endif
 	int readData;
 	int toggle=0;
     while (1) {

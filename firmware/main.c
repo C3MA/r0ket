@@ -41,16 +41,16 @@ int main(void) {
 //    systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
 // cpuInit already calls this
 //    gpioInit();                               // Enable GPIO 
+#if 0 
     pmuInit();                                // Configure power management
     adcInit();                                // Config adc pins to save power
-
+#endif
     // initialise basic badge functions
     rbInit();
 
     fsInit();
-  
     lcdInit(); // display
-
+    
     lcdFill(0);
     lcdDisplay();
 
