@@ -21,10 +21,10 @@ volatile unsigned int lastTick;
 #include "core/cpu/cpu.h"
 
 
-void TIMER32_0_IRQHandler(void)
+void TIMER32_1_IRQHandler(void)
 {  	
 	/* Clear the interrupt flag */
-	TMR_TMR32B0IR = TMR_TMR32B0IR_MR0;
+	TMR_TMR32B1IR = TMR_TMR32B1IR_MR0;
 	static int time=0;
 	if (time==0){time=1;} else {time=0;}
 	gpioSetValue (RB_LED2, time);
@@ -74,31 +74,31 @@ void main_kerosin(void) {
 	
 	DoString(10, 25, "Enter:");
 	lcdDisplay();
-#if 0
+
 	/* ---------------------------------------------- */	
 	gpioSetDir(RB_SPI_SS0, gpioDirection_Output);
 	gpioSetDir(RB_LED2, gpioDirection_Output);
 	
 	
 	/*--- SETUP the 32bit TIMER ---*/
-    /* Enable the clock for CT32B0 */
-    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
+    /* Enable the clock for CT32B1 */
+    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B1);
 	
-    TMR_TMR32B0MR0 = 144; //set timer to 250kHz theory: 144=(72E6/250E3)/2
+    TMR_TMR32B1MR0 = 144; //set timer to 250kHz theory: 144=(72E6/250E3)/2
 	
-    /* Configure match control register to raise an interrupt and reset on MR0 */
-    TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
+	/* Configure match control register to raise an interrupt and reset on MR0 */
+    TMR_TMR32B1MCR = (TMR_TMR32B1MCR_MR0_INT_ENABLED | TMR_TMR32B1MCR_MR0_RESET_ENABLED);
 	
-    /* Enable the TIMER0 interrupt */
-    NVIC_EnableIRQ(TIMER_32_0_IRQn);
+    /* Enable the TIMER1 Interrupt */
+    NVIC_EnableIRQ(TIMER_32_1_IRQn);
 	
 	/* ENABLE the 32bit timer */
-	TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
+	TMR_TMR32B1TCR = TMR_TMR32B1TCR_COUNTERENABLE_ENABLED;
 	
 	DoString(1, 50, "Time enabled!");
 	lcdDisplay();
 	/* ---------------------------------------------- */
-#endif
+
 	int readData;
 	int toggle=0;
     while (1) {
