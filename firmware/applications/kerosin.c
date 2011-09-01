@@ -18,18 +18,33 @@ volatile unsigned int lastTick;
 
 
 /* Use the 16bit timer for the DMX signal generation */
-#include "core/cpu/cpu.h"
+#include "core/timer32/timer32.h"
 
+void handler(void);
 
-void TIMER32_1_IRQHandler(void)
-{  	
-	/* Clear the interrupt flag */
-	TMR_TMR32B1IR = TMR_TMR32B1IR_MR0;
+void startTimer(void) {
+    timer32Callback0 = handler;
+    
+    /* Enable the clock for CT32B0 */
+    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
+    TMR_TMR32B0MR0  = (72E6/5E3)/2;
+    TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
+    NVIC_EnableIRQ(TIMER_32_0_IRQn);
+    TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
+}
+
+void stopTimer(void) {
+    NVIC_DisableIRQ(TIMER_32_0_IRQn);
+    TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
+}
+
+void handler(void)
+{
 	static int time=0;
 	if (time==0){time=1;} else {time=0;}
 	gpioSetValue (RB_LED2, time);
 	gpioSetValue(RB_SPI_SS0, time);
-};
+}
 
 void main_kerosin(void) {
 
@@ -75,26 +90,7 @@ void main_kerosin(void) {
 	DoString(10, 25, "Enter:");
 	lcdDisplay();
 
-	/* ---------------------------------------------- */	
-	gpioSetDir(RB_SPI_SS0, gpioDirection_Output);
-	gpioSetDir(RB_LED2, gpioDirection_Output);
-	
-	
-	/*--- SETUP the 32bit TIMER ---*/
-    /* Enable the clock for CT32B1 */
-    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B1);
-	
-    TMR_TMR32B1MR0 = 144; //set timer to 250kHz theory: 144=(72E6/250E3)/2
-	
-	/* Configure match control register to raise an interrupt and reset on MR0 */
-    TMR_TMR32B1MCR = (TMR_TMR32B1MCR_MR0_INT_ENABLED | TMR_TMR32B1MCR_MR0_RESET_ENABLED);
-	
-    /* Enable the TIMER1 Interrupt */
-    NVIC_EnableIRQ(TIMER_32_1_IRQn);
-	
-	/* ENABLE the 32bit timer */
-	TMR_TMR32B1TCR = TMR_TMR32B1TCR_COUNTERENABLE_ENABLED;
-	
+	startTimer();
 	DoString(1, 50, "Time enabled!");
 	lcdDisplay();
 	/* ---------------------------------------------- */
@@ -126,6 +122,8 @@ void main_kerosin(void) {
 				break;
 		}		
 	}
+	
+	stopTimer();
 }
 
 #ifdef CFG_USBCDC
