@@ -17,7 +17,7 @@ volatile unsigned int lastTick;
 #endif
 
 
-/* Use the 16bit timer for the DMX signal generation */
+/* Use the 32bit timer for the DMX signal generation */
 #include "core/timer32/timer32.h"
 
 void handler(void);
@@ -27,7 +27,7 @@ void startTimer(void) {
     
     /* Enable the clock for CT32B0 */
     SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
-    TMR_TMR32B0MR0  = (72E6/5E3)/2;
+    TMR_TMR32B0MR0  = 288; /*(72E6/250E3); /* frequency of 250kBit/s -> bit time of 4us */
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
