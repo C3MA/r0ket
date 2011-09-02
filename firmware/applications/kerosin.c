@@ -38,15 +38,21 @@ void startTimer(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 	
 	/* FIXME debug stuff */
+	dmxChannelBuffer[0] = 0xFF;
+	dmxChannelBuffer[1] = 0xAA;
+	dmxChannelBuffer[2] = 0x0;
+	dmxChannelBuffer[3] = 0xFF;
+	dmxChannelBuffer[4] = 0;
+	
 	dmxFormatBuffer[0] = 0; /* Startbit */
-	dmxFormatBuffer[1] = (dmxChannelBuffer[0] & 1);
-	dmxFormatBuffer[2] = (dmxChannelBuffer[0] & (1 << 1));
-	dmxFormatBuffer[3] = (dmxChannelBuffer[0] & (1 << 2));
-	dmxFormatBuffer[4] = (dmxChannelBuffer[0] & (1 << 3));
-	dmxFormatBuffer[5] = (dmxChannelBuffer[0] & (1 << 4));
-	dmxFormatBuffer[6] = (dmxChannelBuffer[0] & (1 << 5));
-	dmxFormatBuffer[7] = (dmxChannelBuffer[0] & (1 << 6));
-	dmxFormatBuffer[8] = (dmxChannelBuffer[0] & (1 << 7));
+	dmxFormatBuffer[1] = (0 > (dmxChannelBuffer[0] & 1));
+	dmxFormatBuffer[2] = (0 > (dmxChannelBuffer[0] & (1 << 1)));
+	dmxFormatBuffer[3] = (0 > (dmxChannelBuffer[0] & (1 << 2)));
+	dmxFormatBuffer[4] = (0 > (dmxChannelBuffer[0] & (1 << 3)));
+	dmxFormatBuffer[5] = (0 > (dmxChannelBuffer[0] & (1 << 4)));
+	dmxFormatBuffer[6] = (0 > (dmxChannelBuffer[0] & (1 << 5)));
+	dmxFormatBuffer[7] = (0 > (dmxChannelBuffer[0] & (1 << 6)));
+	dmxFormatBuffer[8] = (0 > (dmxChannelBuffer[0] & (1 << 7)));
 	dmxFormatBuffer[9] = 1; /* Stoppbit */
 	dmxFormatBuffer[10] = 1; /* Stoppbit */
 	
@@ -70,37 +76,15 @@ void handler(void)
 	if (formatPtr > DMX_FORMAT_MAX)
 	{
 		formatPtr = 0;
-		
-		if (channelPtr > DMX_CHANNEL_MAX)
-		{
-			channelPtr=0;
-			/*FIXME build the start frame and the startbyte */
-		}
-		else
-		{
-			dmxFormatBuffer[0] = 0; /* Startbit */
-			dmxFormatBuffer[1] = (dmxChannelBuffer[channelPtr] & 1);
-			dmxFormatBuffer[2] = (dmxChannelBuffer[channelPtr] & (1 << 1));
-			dmxFormatBuffer[3] = (dmxChannelBuffer[channelPtr] & (1 << 2));
-			dmxFormatBuffer[4] = (dmxChannelBuffer[channelPtr] & (1 << 3));
-			dmxFormatBuffer[5] = (dmxChannelBuffer[channelPtr] & (1 << 4));
-			dmxFormatBuffer[6] = (dmxChannelBuffer[channelPtr] & (1 << 5));
-			dmxFormatBuffer[7] = (dmxChannelBuffer[channelPtr] & (1 << 6));
-			dmxFormatBuffer[8] = (dmxChannelBuffer[channelPtr] & (1 << 7));
-			dmxFormatBuffer[9] = 1; /* Stoppbit */
-			dmxFormatBuffer[10] = 1; /* Stoppbit */
-			
-			dmxFormatBuffer[11] = 1; /* MARK zwischen Frames (Interdigit) */
-			dmxFormatBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
-			dmxFormatBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
-			dmxFormatBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */
-//FIXME			channelPtr++;
-		}
 	}
 	
-	
-	gpioSetValue (RB_LED2, dmxFormatBuffer[formatPtr]);
-	gpioSetValue(RB_SPI_SS0, dmxFormatBuffer[formatPtr]);
+//	gpioSetValue(RB_SPI_SS0, dmxFormatBuffer[formatPtr]);
+	if (dmxFormatBuffer[formatPtr] > 0) {
+		gpioSetValue(RB_SPI_SS0, 1);
+	} else {
+		gpioSetValue(RB_SPI_SS0, 0);
+	}
+
 	
 	formatPtr++;
 }
@@ -148,18 +132,12 @@ void main_kerosin(void) {
 	
 	DoString(10, 25, "Enter:");
 	lcdDisplay();
-
+	
 	startTimer();
 	DoString(1, 50, "Time enabled!");
 	lcdDisplay();
 	/* ---------------------------------------------- */
 
-	dmxChannelBuffer[0] = 0xCA;
-	dmxChannelBuffer[1] = 0xAA;
-	dmxChannelBuffer[2] = 0x0;
-	dmxChannelBuffer[3] = 0xFF;
-	dmxChannelBuffer[4] = 0;
-	
 	int readData;
 	int toggle=0;
     while (1) {
