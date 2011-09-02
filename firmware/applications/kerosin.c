@@ -16,6 +16,11 @@ volatile unsigned int lastTick;
 	#include "core/uart/uart.h"
 #endif
 
+#define DMX_FORMAT_MAX	15
+#define DMX_CHANNEL_MAX 512
+
+uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX];
+uint8_t dmxFormatBuffer[DMX_FORMAT_MAX];
 
 /* Use the 32bit timer for the DMX signal generation */
 #include "core/timer32/timer32.h"
@@ -27,10 +32,28 @@ void startTimer(void) {
     
     /* Enable the clock for CT32B0 */
     SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
-    TMR_TMR32B0MR0  = 288; /*(72E6/250E3); /* frequency of 250kBit/s -> bit time of 4us */
+    TMR_TMR32B0MR0  = 144; /*(72E6/250E3); /* frequency of 250kBit/s -> bit time of 4us */
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
+	
+	/* FIXME debug stuff */
+	dmxFormatBuffer[0] = 0; /* Startbit */
+	dmxFormatBuffer[1] = (dmxChannelBuffer[0] & 1);
+	dmxFormatBuffer[2] = (dmxChannelBuffer[0] & (1 << 1));
+	dmxFormatBuffer[3] = (dmxChannelBuffer[0] & (1 << 2));
+	dmxFormatBuffer[4] = (dmxChannelBuffer[0] & (1 << 3));
+	dmxFormatBuffer[5] = (dmxChannelBuffer[0] & (1 << 4));
+	dmxFormatBuffer[6] = (dmxChannelBuffer[0] & (1 << 5));
+	dmxFormatBuffer[7] = (dmxChannelBuffer[0] & (1 << 6));
+	dmxFormatBuffer[8] = (dmxChannelBuffer[0] & (1 << 7));
+	dmxFormatBuffer[9] = 1; /* Stoppbit */
+	dmxFormatBuffer[10] = 1; /* Stoppbit */
+	
+	dmxFormatBuffer[11] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFormatBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFormatBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFormatBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */
 }
 
 void stopTimer(void) {
@@ -38,12 +61,48 @@ void stopTimer(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
 }
 
+
 void handler(void)
 {
-	static int time=0;
-	if (time==0){time=1;} else {time=0;}
-	gpioSetValue (RB_LED2, time);
-	gpioSetValue(RB_SPI_SS0, time);
+	static int channelPtr=0;
+	static int formatPtr = 0;
+	
+	if (formatPtr > DMX_FORMAT_MAX)
+	{
+		formatPtr = 0;
+		
+		if (channelPtr > DMX_CHANNEL_MAX)
+		{
+			channelPtr=0;
+			/*FIXME build the start frame and the startbyte */
+		}
+		else
+		{
+			dmxFormatBuffer[0] = 0; /* Startbit */
+			dmxFormatBuffer[1] = (dmxChannelBuffer[channelPtr] & 1);
+			dmxFormatBuffer[2] = (dmxChannelBuffer[channelPtr] & (1 << 1));
+			dmxFormatBuffer[3] = (dmxChannelBuffer[channelPtr] & (1 << 2));
+			dmxFormatBuffer[4] = (dmxChannelBuffer[channelPtr] & (1 << 3));
+			dmxFormatBuffer[5] = (dmxChannelBuffer[channelPtr] & (1 << 4));
+			dmxFormatBuffer[6] = (dmxChannelBuffer[channelPtr] & (1 << 5));
+			dmxFormatBuffer[7] = (dmxChannelBuffer[channelPtr] & (1 << 6));
+			dmxFormatBuffer[8] = (dmxChannelBuffer[channelPtr] & (1 << 7));
+			dmxFormatBuffer[9] = 1; /* Stoppbit */
+			dmxFormatBuffer[10] = 1; /* Stoppbit */
+			
+			dmxFormatBuffer[11] = 1; /* MARK zwischen Frames (Interdigit) */
+			dmxFormatBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
+			dmxFormatBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
+			dmxFormatBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */
+//FIXME			channelPtr++;
+		}
+	}
+	
+	
+	gpioSetValue (RB_LED2, dmxFormatBuffer[formatPtr]);
+	gpioSetValue(RB_SPI_SS0, dmxFormatBuffer[formatPtr]);
+	
+	formatPtr++;
 }
 
 void main_kerosin(void) {
@@ -95,6 +154,12 @@ void main_kerosin(void) {
 	lcdDisplay();
 	/* ---------------------------------------------- */
 
+	dmxChannelBuffer[0] = 0xCA;
+	dmxChannelBuffer[1] = 0xAA;
+	dmxChannelBuffer[2] = 0x0;
+	dmxChannelBuffer[3] = 0xFF;
+	dmxChannelBuffer[4] = 0;
+	
 	int readData;
 	int toggle=0;
     while (1) {
