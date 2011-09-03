@@ -45,14 +45,14 @@ void startTimer(void) {
 	dmxChannelBuffer[4] = 0;
 	
 	dmxFormatBuffer[0] = 0; /* Startbit */
-	dmxFormatBuffer[1] = 1;
-	dmxFormatBuffer[2] = 0;
-	dmxFormatBuffer[3] = 0;
-	dmxFormatBuffer[4] = 0;
-	dmxFormatBuffer[5] = 0;
-	dmxFormatBuffer[6] = 0;
-	dmxFormatBuffer[7] = 1;
-	dmxFormatBuffer[8] = 0;
+    dmxFormatBuffer[1] = (dmxChannelBuffer[0] & 1);
+	dmxFormatBuffer[2] = (dmxChannelBuffer[0] & (1 << 1));
+	dmxFormatBuffer[3] = (dmxChannelBuffer[0] & (1 << 2));
+	dmxFormatBuffer[4] = (dmxChannelBuffer[0] & (1 << 3));
+	dmxFormatBuffer[5] = (dmxChannelBuffer[0] & (1 << 4));
+	dmxFormatBuffer[6] = (dmxChannelBuffer[0] & (1 << 5));
+	dmxFormatBuffer[7] = (dmxChannelBuffer[0] & (1 << 6));
+	dmxFormatBuffer[8] = (dmxChannelBuffer[0] & (1 << 7));
 	dmxFormatBuffer[9] = 1; /* Stoppbit */
 	dmxFormatBuffer[10] = 1; /* Stoppbit */
 	
