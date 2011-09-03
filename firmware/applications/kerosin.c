@@ -71,7 +71,7 @@ void buildDMXframe(uint8_t data)
 	dmxFrameBuffer[11] = 1; /* MARK zwischen Frames (Interdigit) */
 	dmxFrameBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
 	dmxFrameBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
-	dmxFrameBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */	
+	dmxFrameBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */
 }
 
 void handler(void)
@@ -92,29 +92,38 @@ void handler(void)
 		gpioSetValue(RB_SPI_SS0, 1);
 		resetCounter++;
 		return;
-	} else if (resetCounter >= 26 && resetCounter <= 30 /* ??? number ! */){
-		/* Startbyte */
-		
+	} else if (resetCounter == 26){
+		/* build the startbyte */
+		buildDMXframe(0);
+		framePtr = 0; /* send the stop-bit */
+		resetCounter++;
+	} else if (resetCounter >= 27 && resetCounter < (26 + DMX_FORMAT_MAX)) {
+		resetCounter++; /* Send the startbyte */
+	} else if (resetCounter == (26 + DMX_FORMAT_MAX)) {		
 		/* build first frame */		
 		channelPtr = 0;
-		buildDMXframe(dmxChannelBuffer[channelPtr++]);
 		framePtr = 0;
-		resetCounter = 32; /* leave the beginning */
+		buildDMXframe(dmxChannelBuffer[channelPtr++]);
+		resetCounter = (26 + DMX_FORMAT_MAX) + 1; /* leave the beginning (reset and start byte) */
+	} else {
+		/* Handle normal state, when no start is used */		
+		if (framePtr >= DMX_FORMAT_MAX)
+		{
+			/* reset frame pointer */
+			framePtr = 0;
+			
+			if (channelPtr >= 2) {
+				resetCounter = 0; /* activate RESET */
+				return;
+			}
+			
+			buildDMXframe(dmxChannelBuffer[channelPtr++]);
+		}
 	}
 
+
 		
-	if (framePtr >= DMX_FORMAT_MAX)
-	{
-		/* reset frame pointer */
-		framePtr = 0;
-		
-		if (channelPtr >= 2) {
-			resetCounter = 0; /* activate RESET */
-			return;
-		}
-		
-		buildDMXframe(dmxChannelBuffer[channelPtr++]);
-	}
+
 	
 //	gpioSetValue(RB_SPI_SS0, dmxFrameBuffer[framePtr]);
 	if (dmxFrameBuffer[framePtr] > 0) {
