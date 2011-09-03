@@ -17,10 +17,11 @@ volatile unsigned int lastTick;
 #endif
 
 #define DMX_FORMAT_MAX	15
+
 #define DMX_CHANNEL_MAX 512
 
 uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX];
-uint8_t dmxFormatBuffer[DMX_FORMAT_MAX];
+uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
 
 /* Use the 32bit timer for the DMX signal generation */
 #include "core/timer32/timer32.h"
@@ -44,22 +45,6 @@ void startTimer(void) {
 	dmxChannelBuffer[3] = 0xFF;
 	dmxChannelBuffer[4] = 0;
 	
-	dmxFormatBuffer[0] = 0; /* Startbit */
-    dmxFormatBuffer[1] = (dmxChannelBuffer[0] & 1);
-	dmxFormatBuffer[2] = (dmxChannelBuffer[0] & (1 << 1));
-	dmxFormatBuffer[3] = (dmxChannelBuffer[0] & (1 << 2));
-	dmxFormatBuffer[4] = (dmxChannelBuffer[0] & (1 << 3));
-	dmxFormatBuffer[5] = (dmxChannelBuffer[0] & (1 << 4));
-	dmxFormatBuffer[6] = (dmxChannelBuffer[0] & (1 << 5));
-	dmxFormatBuffer[7] = (dmxChannelBuffer[0] & (1 << 6));
-	dmxFormatBuffer[8] = (dmxChannelBuffer[0] & (1 << 7));
-	dmxFormatBuffer[9] = 1; /* Stoppbit */
-	dmxFormatBuffer[10] = 1; /* Stoppbit */
-	
-	dmxFormatBuffer[11] = 1; /* MARK zwischen Frames (Interdigit) */
-	dmxFormatBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
-	dmxFormatBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
-	dmxFormatBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */
 }
 
 void stopTimer(void) {
@@ -67,26 +52,79 @@ void stopTimer(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
 }
 
+/* build the next frame, that should be send 
+   @param[in] data  the byte that should be send. */
+void buildDMXframe(uint8_t data)
+{
+	dmxFrameBuffer[0] = 0; /* Startbit */
+	dmxFrameBuffer[1] = (data & 1);
+	dmxFrameBuffer[2] = (data & (1 << 1));
+	dmxFrameBuffer[3] = (data & (1 << 2));
+	dmxFrameBuffer[4] = (data & (1 << 3));
+	dmxFrameBuffer[5] = (data & (1 << 4));
+	dmxFrameBuffer[6] = (data & (1 << 5));
+	dmxFrameBuffer[7] = (data & (1 << 6));
+	dmxFrameBuffer[8] = (data & (1 << 7));
+	dmxFrameBuffer[9] = 1; /* Stoppbit */
+	dmxFrameBuffer[10] = 1; /* Stoppbit */
+	
+	dmxFrameBuffer[11] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */	
+}
 
 void handler(void)
 {
 	static int channelPtr=0;
-	static int formatPtr = 0;
+	static int framePtr = 0;
+	static int resetCounter = 0;
 	
-	if (formatPtr >= 11) //DMX_FORMAT_MAX
+	/* make the reset flag */
+	if (resetCounter < 22)
 	{
-		formatPtr = 0;
+		/* reset of 88us */
+		gpioSetValue(RB_SPI_SS0, 0);
+		resetCounter++;
+		return;
+	} else if (resetCounter >= 22 && resetCounter < 26) {
+		/* mark of 8us */
+		gpioSetValue(RB_SPI_SS0, 1);
+		resetCounter++;
+		return;
+	} else if (resetCounter >= 26 && resetCounter <= 30 /* ??? number ! */){
+		/* Startbyte */
+		
+		/* build first frame */		
+		channelPtr = 0;
+		buildDMXframe(dmxChannelBuffer[channelPtr++]);
+		framePtr = 0;
+		resetCounter = 32; /* leave the beginning */
+	}
+
+		
+	if (framePtr >= DMX_FORMAT_MAX)
+	{
+		/* reset frame pointer */
+		framePtr = 0;
+		
+		if (channelPtr >= 2) {
+			resetCounter = 0; /* activate RESET */
+			return;
+		}
+		
+		buildDMXframe(dmxChannelBuffer[channelPtr++]);
 	}
 	
-//	gpioSetValue(RB_SPI_SS0, dmxFormatBuffer[formatPtr]);
-	if (dmxFormatBuffer[formatPtr] > 0) {
+//	gpioSetValue(RB_SPI_SS0, dmxFrameBuffer[framePtr]);
+	if (dmxFrameBuffer[framePtr] > 0) {
 		gpioSetValue(RB_SPI_SS0, 1);
 	} else {
 		gpioSetValue(RB_SPI_SS0, 0);
 	}
 
 	
-	formatPtr++;
+	framePtr++;
 }
 
 void main_kerosin(void) {
