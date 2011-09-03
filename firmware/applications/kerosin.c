@@ -32,27 +32,27 @@ void startTimer(void) {
     
     /* Enable the clock for CT32B0 */
     SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
-    TMR_TMR32B0MR0  = 144; /*(72E6/250E3); /* frequency of 250kBit/s -> bit time of 4us */
+    TMR_TMR32B0MR0  = 288; /*(72E6/250E3); /* frequency of 250kBit/s -> bit time of 4us */
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 	
 	/* FIXME debug stuff */
-	dmxChannelBuffer[0] = 0xFF;
+	dmxChannelBuffer[0] = 0x41;
 	dmxChannelBuffer[1] = 0xAA;
 	dmxChannelBuffer[2] = 0x0;
 	dmxChannelBuffer[3] = 0xFF;
 	dmxChannelBuffer[4] = 0;
 	
 	dmxFormatBuffer[0] = 0; /* Startbit */
-	dmxFormatBuffer[1] = (0 > (dmxChannelBuffer[0] & 1));
-	dmxFormatBuffer[2] = (0 > (dmxChannelBuffer[0] & (1 << 1)));
-	dmxFormatBuffer[3] = (0 > (dmxChannelBuffer[0] & (1 << 2)));
-	dmxFormatBuffer[4] = (0 > (dmxChannelBuffer[0] & (1 << 3)));
-	dmxFormatBuffer[5] = (0 > (dmxChannelBuffer[0] & (1 << 4)));
-	dmxFormatBuffer[6] = (0 > (dmxChannelBuffer[0] & (1 << 5)));
-	dmxFormatBuffer[7] = (0 > (dmxChannelBuffer[0] & (1 << 6)));
-	dmxFormatBuffer[8] = (0 > (dmxChannelBuffer[0] & (1 << 7)));
+	dmxFormatBuffer[1] = 1;
+	dmxFormatBuffer[2] = 0;
+	dmxFormatBuffer[3] = 0;
+	dmxFormatBuffer[4] = 0;
+	dmxFormatBuffer[5] = 0;
+	dmxFormatBuffer[6] = 0;
+	dmxFormatBuffer[7] = 1;
+	dmxFormatBuffer[8] = 0;
 	dmxFormatBuffer[9] = 1; /* Stoppbit */
 	dmxFormatBuffer[10] = 1; /* Stoppbit */
 	
@@ -73,7 +73,7 @@ void handler(void)
 	static int channelPtr=0;
 	static int formatPtr = 0;
 	
-	if (formatPtr > DMX_FORMAT_MAX)
+	if (formatPtr >= 11) //DMX_FORMAT_MAX
 	{
 		formatPtr = 0;
 	}
