@@ -39,11 +39,16 @@ void startTimer(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 	
 	/* FIXME debug stuff */
-	dmxChannelBuffer[0] = 0x41;
-	dmxChannelBuffer[1] = 0xAA;
-	dmxChannelBuffer[2] = 0x0;
-	dmxChannelBuffer[3] = 0xFF;
-	dmxChannelBuffer[4] = 0;
+	dmxChannelBuffer[0] = 0x00; // red
+	dmxChannelBuffer[1] = 0xFF; // green
+	dmxChannelBuffer[2] = 0x00; // blue
+	dmxChannelBuffer[3] = 0x00;
+	dmxChannelBuffer[4] = 0xFF;
+	dmxChannelBuffer[5] = 0x00;
+	dmxChannelBuffer[6] = 0xFF;
+	dmxChannelBuffer[7] = 0xFF;
+	dmxChannelBuffer[8] = 0xFF;
+	dmxChannelBuffer[9] = 0xFF;
 	
 }
 
@@ -191,13 +196,14 @@ void main_kerosin(void) {
 				
 		switch (getInput()) {
 			case BTN_ENTER:
-				enterCnt++;
+				enterCnt+=10;
 				/* This is debug code */
 				puts("ENTER\t");
 				buffer[0] = '0' + enterCnt;
 				buffer[1] = 0;
 				puts(buffer);
 				puts("\r\n");
+				dmxChannelBuffer[1] = enterCnt; 
 				DoInt(50, 25, (int) (enterCnt));
 				lcdDisplay();				
 				break;
