@@ -20,9 +20,9 @@ volatile unsigned int lastTick;
 
 #define DMX_CHANNEL_MAX 512
 
-
-#define DMX_RESET_COUNT	22
-#define DMX_MARK_COUNT	26	/* 22 - 26 : 4ticks -> 16us */
+/* define some constants for the reset */
+#define DMX_RESET_COUNT	1000
+#define DMX_MARK_COUNT	1050	/* 50ticks -> 200us */
 
 uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX];
 uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
@@ -208,7 +208,29 @@ void main_kerosin(void) {
 				buffer[1] = 0;
 				puts(buffer);
 				puts("\r\n");
-				dmxChannelBuffer[1] = enterCnt; 
+				
+				switch (enterCnt % 4)
+				{
+					case 1:
+						DoString(1, 50, "RED");
+						dmxChannelBuffer[0] = 0xFF; // red
+						dmxChannelBuffer[1] = 0x00; // green
+						dmxChannelBuffer[2] = 0x00; // blue
+						break;
+					case 2:
+						DoString(1, 50, "GREEN");
+						dmxChannelBuffer[0] = 0x00; // red
+						dmxChannelBuffer[1] = 0xFF; // green
+						dmxChannelBuffer[2] = 0x00; // blue
+						break;
+					case 3:
+						DoString(1, 50, "BLUE");
+						dmxChannelBuffer[0] = 0x00; // red
+						dmxChannelBuffer[1] = 0x00; // green
+						dmxChannelBuffer[2] = 0xFF; // blue
+						break;
+				}
+				
 				DoInt(50, 25, (int) (enterCnt));
 				lcdDisplay();				
 				break;
