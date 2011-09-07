@@ -20,6 +20,10 @@ volatile unsigned int lastTick;
 
 #define DMX_CHANNEL_MAX 512
 
+
+#define DMX_RESET_COUNT	22
+#define DMX_MARK_COUNT	26	/* 22 - 26 : 4ticks -> 16us */
+
 uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX];
 uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
 
@@ -86,30 +90,31 @@ void handler(void)
 	static int resetCounter = 0;
 	
 	/* make the reset flag */
-	if (resetCounter < 22)
+	if (resetCounter < DMX_RESET_COUNT)
 	{
 		/* reset of 88us */
 		gpioSetValue(RB_SPI_SS0, 0);
 		resetCounter++;
 		return;
-	} else if (resetCounter >= 22 && resetCounter < 26) {
+	} else if (resetCounter >= DMX_RESET_COUNT && resetCounter < DMX_MARK_COUNT) {
 		/* mark of 8us */
 		gpioSetValue(RB_SPI_SS0, 1);
 		resetCounter++;
 		return;
-	} else if (resetCounter == 26){
+	} else if (resetCounter == DMX_MARK_COUNT){
 		/* build the startbyte */
 		buildDMXframe(0);
 		framePtr = 0; /* send the stop-bit */
 		resetCounter++;
-	} else if (resetCounter >= 27 && resetCounter < (26 + DMX_FORMAT_MAX)) {
+	} else if (resetCounter >= (DMX_MARK_COUNT + 1) 
+			   && resetCounter < (DMX_MARK_COUNT + DMX_FORMAT_MAX)) {
 		resetCounter++; /* Send the startbyte */
-	} else if (resetCounter == (26 + DMX_FORMAT_MAX)) {		
+	} else if (resetCounter == (DMX_MARK_COUNT + DMX_FORMAT_MAX)) {		
 		/* build first frame */		
 		channelPtr = 0;
 		framePtr = 0;
 		buildDMXframe(dmxChannelBuffer[channelPtr++]);
-		resetCounter = (26 + DMX_FORMAT_MAX) + 1; /* leave the beginning (reset and start byte) */
+		resetCounter = (DMX_MARK_COUNT + DMX_FORMAT_MAX) + 1; /* leave the beginning (reset and start byte) */
 	} else {
 		/* Handle normal state, when no start is used */		
 		if (framePtr >= DMX_FORMAT_MAX)
