@@ -1,0 +1,12 @@
+This module usese the SS0 Output at "Module A".
+At this module there will be a DMX signal.
+This has to be converted with a bus transceiver (like the SN65176B) to be connted to a DMX-network.
+
+This module needs also the timer module, because there will be registered a callback function for the timeing.
+I used the 32bit timer.
+
+The Makefile (here in core) must uncomented the following line:
+OBJS += timer32/timer32.o
+
+Also we have to append the following line to compile the dmx module.
+OBJS += dmx/dmx.o

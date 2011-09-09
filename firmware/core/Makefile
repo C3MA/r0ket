@@ -25,6 +25,7 @@ OBJS += timer32/timer32.o
 OBJS += uart/uart.o
 OBJS += uart/uart_buf.o
 OBJS += wdt/wdt.o
+OBJS += dmx/dmx.o
 
 ##########################################################################
 # GNU GCC compiler flags
