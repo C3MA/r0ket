@@ -27,6 +27,15 @@ extern void dmx_getDMXbuffer(uint8_t** ppBuffer)
 	(*ppBuffer) = pbuffer;
 }
 
+extern void dmx_setChannel(int channel, uint8_t value)
+{
+	if ((channel >= DMX_FORMAT_MAX) || (channel < 0))
+		return;
+	
+	/* correct channel could be set */
+	dmxChannelBuffer[channel] = value;
+}
+
 extern void dmx_start(void) {
     timer32Callback0 = handler;
     
