@@ -16,13 +16,17 @@ volatile unsigned int lastTick;
 	#include "core/uart/uart.h"
 #endif
 
-#define DMX_FORMAT_MAX	15
+#define DMX_FORMAT_MAX	20
 
 #define DMX_CHANNEL_MAX 512
 
 /* define some constants for the reset */
-#define DMX_RESET_COUNT	1000
-#define DMX_MARK_COUNT	1050	/* 50ticks -> 200us */
+#define COUNTER_RESET_END	22
+#define COUNTER_MARK_END	33	/* 100ticks -> 400us */
+#define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_MAX) + 1
+
+#define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* needed to mark the end of a package */
+#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 30) /* needed to mark the end of a package */
 
 uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX];
 uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
@@ -37,7 +41,7 @@ void startTimer(void) {
     
     /* Enable the clock for CT32B0 */
     SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
-    TMR_TMR32B0MR0  = 288; /*(72E6/250E3); /* frequency of 250kBit/s -> bit time of 4us */
+    TMR_TMR32B0MR0  = 288; /*(72E6/250E3); frequency of 250kBit/s -> bit time of 4us */
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
@@ -81,6 +85,11 @@ void buildDMXframe(uint8_t data)
 	dmxFrameBuffer[12] = 1; /* MARK zwischen Frames (Interdigit) */
 	dmxFrameBuffer[13] = 1; /* MARK zwischen Frames (Interdigit) */
 	dmxFrameBuffer[14] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[15] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[16] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[17] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[18] = 1; /* MARK zwischen Frames (Interdigit) */
+	dmxFrameBuffer[19] = 1; /* MARK zwischen Frames (Interdigit) */
 }
 
 void handler(void)
@@ -90,40 +99,51 @@ void handler(void)
 	static int resetCounter = 0;
 	
 	/* make the reset flag */
-	if (resetCounter < DMX_RESET_COUNT)
+	if (resetCounter < COUNTER_RESET_END)
 	{
-		/* reset of 88us */
+		/* reset of minimum 88us */
 		gpioSetValue(RB_SPI_SS0, 0);
 		resetCounter++;
 		return;
-	} else if (resetCounter >= DMX_RESET_COUNT && resetCounter < DMX_MARK_COUNT) {
+	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
 		/* mark of 8us */
 		gpioSetValue(RB_SPI_SS0, 1);
 		resetCounter++;
 		return;
-	} else if (resetCounter == DMX_MARK_COUNT){
+	} else if (resetCounter == COUNTER_MARK_END){
 		/* build the startbyte */
 		buildDMXframe(0);
 		framePtr = 0; /* send the stop-bit */
 		resetCounter++;
-	} else if (resetCounter >= (DMX_MARK_COUNT + 1) 
-			   && resetCounter < (DMX_MARK_COUNT + DMX_FORMAT_MAX)) {
+	} else if (resetCounter >= (COUNTER_MARK_END + 1) 
+			   && resetCounter < (COUNTER_MARK_END + DMX_FORMAT_MAX)) {
 		resetCounter++; /* Send the startbyte */
-	} else if (resetCounter == (DMX_MARK_COUNT + DMX_FORMAT_MAX)) {		
+	} else if (resetCounter == (COUNTER_MARK_END + DMX_FORMAT_MAX)) {		
 		/* build first frame */		
 		channelPtr = 0;
 		framePtr = 0;
 		buildDMXframe(dmxChannelBuffer[channelPtr++]);
-		resetCounter = (DMX_MARK_COUNT + DMX_FORMAT_MAX) + 1; /* leave the beginning (reset and start byte) */
+		resetCounter = COUNTER_PREAMPLE_END; /* leave the beginning (reset and start byte) */
+		
+		/*-------------- this build a mark at the end between two packages -------*/		
+	} else if (resetCounter >= COUNTER_POSTMARK_END) { /* first check if the end has been reached */
+		/* Rest the counter and begin from the beginning */
+		resetCounter = 0;
+		return;
+	} else if (resetCounter >= COUNTER_POSTMARK) {
+		gpioSetValue(RB_SPI_SS0, 1);
+		resetCounter++;
+		return;
+		
 	} else {
 		/* Handle normal state, when no start is used */		
-		if (framePtr >= DMX_FORMAT_MAX)
+		if (framePtr >= 10)
 		{
 			/* reset frame pointer */
 			framePtr = 0;
 			
-			if (channelPtr >= 2) {
-				resetCounter = 0; /* activate RESET */
+			if (channelPtr >= DMX_FORMAT_MAX) {
+				resetCounter = COUNTER_POSTMARK; /* jump to the end and build the end-mark */
 				return;
 			}
 			
@@ -201,7 +221,7 @@ void main_kerosin(void) {
 				
 		switch (getInput()) {
 			case BTN_ENTER:
-				enterCnt+=10;
+				enterCnt++;
 				/* This is debug code */
 				puts("ENTER\t");
 				buffer[0] = '0' + enterCnt;
@@ -212,23 +232,33 @@ void main_kerosin(void) {
 				switch (enterCnt % 4)
 				{
 					case 1:
-						DoString(1, 50, "RED");
+						DoString(1, 50, "RED              ");
 						dmxChannelBuffer[0] = 0xFF; // red
 						dmxChannelBuffer[1] = 0x00; // green
 						dmxChannelBuffer[2] = 0x00; // blue
+						dmxChannelBuffer[3] = 0x00; // empty
 						break;
 					case 2:
-						DoString(1, 50, "GREEN");
+						DoString(1, 50, "GREEN              ");
 						dmxChannelBuffer[0] = 0x00; // red
 						dmxChannelBuffer[1] = 0xFF; // green
 						dmxChannelBuffer[2] = 0x00; // blue
+						dmxChannelBuffer[3] = 0x00; // empty
 						break;
 					case 3:
-						DoString(1, 50, "BLUE");
+						DoString(1, 50, "BLUE              ");
 						dmxChannelBuffer[0] = 0x00; // red
 						dmxChannelBuffer[1] = 0x00; // green
 						dmxChannelBuffer[2] = 0xFF; // blue
-						break;
+						dmxChannelBuffer[3] = 0xFF; // empty
+						break;						
+					case 0:
+						DoString(1, 50, "MIXED              ");
+						dmxChannelBuffer[0] = 0xAA; // red
+						dmxChannelBuffer[1] = 0x00; // green
+						dmxChannelBuffer[2] = 0xFF; // blue
+						dmxChannelBuffer[3] = 0xFF; // empty
+						break;						
 				}
 				
 				DoInt(50, 25, (int) (enterCnt));
