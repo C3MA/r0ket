@@ -21,12 +21,12 @@ volatile unsigned int lastTick;
 #define DMX_CHANNEL_MAX 512
 
 /* define some constants for the reset */
-#define COUNTER_RESET_END	22
-#define COUNTER_MARK_END	33	/* 100ticks -> 400us */
+#define COUNTER_RESET_END	400
+#define COUNTER_MARK_END	(COUNTER_RESET_END + 100)	/* 100ticks -> 400us */
 #define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_MAX) + 1
 
 #define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* needed to mark the end of a package */
-#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 30) /* needed to mark the end of a package */
+#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* needed to mark the end of a package */
 
 uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX];
 uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
