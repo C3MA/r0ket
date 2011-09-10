@@ -18,13 +18,15 @@ volatile unsigned int lastTick;
 
 #include "core/dmx/dmx.h"
 
+#include "systick/systick.h" /* needed for active waiting */
+
 
 void main_kerosin(void) {
 
 	uint8_t enterCnt = 0;
 	uint8_t buffer[64];
 	
-//	cpuInit();                                // Configure the CPU
+//	cpuInit();                                // Configure the CPU already done in the startup-function
 	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
 	gpioInit();                               // Enable GPIO
 //	pmuInit();                                // Configure power management
@@ -126,6 +128,20 @@ void main_kerosin(void) {
 				DoString(1, 50, "RX-Cnt:");
 				DoInt(60, 50, readData);
 				lcdDisplay();
+				break;
+			case BTN_DOWN:
+				systickInit(1);
+				dmx_setLightBox(0, 0, 0, 0);
+				systickDelay(500);             // Wait 500ms
+				for (int red=0; red < 255; red+=5) {
+					dmx_setLightBox(0, red, 0, 0);
+					systickDelay(200);             // Wait 200ms
+				}
+				break;
+			case BTN_UP:
+				dmx_setChannel(0,33);
+				dmx_setChannel(1, 33);
+				dmx_setChannel(2, 33);
 				break;
 			default:
 				break;

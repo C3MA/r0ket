@@ -36,6 +36,17 @@ extern void dmx_setChannel(int channel, uint8_t value)
 	dmxChannelBuffer[channel] = value;
 }
 
+extern void dmx_setLightBox(int box, uint8_t red, uint8_t green, uint8_t blue)
+{
+	int maxBox = DMX_FORMAT_MAX / 4;
+	if (box < 0 || box >= maxBox)
+		return;
+	
+	dmx_setChannel(box * 4, red);
+	dmx_setChannel((box * 4) + 1, green);
+	dmx_setChannel((box * 4) + 2, blue);
+}
+
 extern void dmx_start(void) {
     timer32Callback0 = handler;
     
