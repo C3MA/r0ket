@@ -4,7 +4,7 @@
 #define DMX_FORMAT_MAX	20
 
 #define DMX_BREAK	0
-#define MARK	1
+#define DMX_MARK	1
 
 /* define some constants for the reset */
 #define COUNTER_RESET_END	400
@@ -116,7 +116,7 @@ void handler(void)
 	if (resetCounter < COUNTER_RESET_END)
 	{
 		/* reset of minimum 88us */
-		gpioSetValue(RB_SPI_SS0, MARK);
+		gpioSetValue(RB_SPI_SS0, DMX_MARK);
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
@@ -171,7 +171,7 @@ void handler(void)
 	if (dmxFrameBuffer[framePtr] > 0) {
 		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 	} else {
-		gpioSetValue(RB_SPI_SS0, MARK);
+		gpioSetValue(RB_SPI_SS0, DMX_MARK);
 	}
 	
 	
