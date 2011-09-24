@@ -18,7 +18,7 @@
 #define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* first tick of the end of a frame */
 #define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* last tick of the end of a frame */
 
-#define EXTR_LEVEL(a)			((a) > 0) ? DMX_BREAK : DMX_MARK
+#define EXTR_LEVEL(a)			((a) < 0) ? DMX_BREAK : DMX_MARK
 
 static uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX]; /*FIXME make it private */
 static uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
@@ -121,11 +121,11 @@ void handler(void)
 	if (resetCounter < COUNTER_RESET_END)
 	{
 		/* reset of minimum 88us */
-		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
+		gpioSetValue(RB_SPI_SS0, DMX_MARK);
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
-		gpioSetValue(RB_SPI_SS0, DMX_MARK);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
@@ -150,7 +150,7 @@ void handler(void)
 		return;
 	} else if (resetCounter >= COUNTER_POSTMARK) {
 		/* build the mark between to frames until COUNTER_POSTMARK_END */
-		gpioSetValue(RB_SPI_SS0, DMX_MARK);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 		
