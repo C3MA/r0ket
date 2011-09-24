@@ -154,7 +154,7 @@ void handler(void)
 		
 	} else {
 		/* Handle normal state, when no start is used */		
-		if (framePtr >= DMX_FORMAT_MAX)
+		if (framePtr >= 10) /* do not send an interdigit between two channels */
 		{
 			/* reset frame pointer */
 			framePtr = 0;
