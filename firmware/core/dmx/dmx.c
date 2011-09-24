@@ -128,7 +128,7 @@ void handler(void)
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
 		/* build the startbyte */
-		buildDMXframe(0);
+		buildDMXframe(1); /* double negation ftw... so the zero will be a one */
 		framePtr = 0; /* send the stop-bit */
 		resetCounter++;
 	} else if (resetCounter >= (COUNTER_MARK_END + 1) 
@@ -154,7 +154,7 @@ void handler(void)
 		
 	} else {
 		/* Handle normal state, when no start is used */		
-		if (framePtr >= 10) /* do not send an interdigit between two channels */
+		if (framePtr >= 11) /* do not send an interdigit between two channels */
 		{
 			/* reset frame pointer */
 			framePtr = 0;
