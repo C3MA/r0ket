@@ -1,6 +1,9 @@
 #include "basic/basic.h"
 #include "core/dmx/dmx.h"
 
+/* Lenght of dmxFrameBuffer, 
+ * that descibes one byte including start-bit, stop-bits 
+ * and mark between two bytes/channel (intertigit) */
 #define DMX_FORMAT_MAX	20
 
 #define DMX_BREAK	0
