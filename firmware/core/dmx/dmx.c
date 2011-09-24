@@ -87,7 +87,7 @@ extern void dmx_stop(void) {
  @param[in] data  the byte that should be send. */
 void buildDMXframe(uint8_t data)
 {
-	dmxFrameBuffer[0] = 1; /* Startbit */
+	dmxFrameBuffer[0] = 0; /* Startbit */
 	dmxFrameBuffer[1] = !(data & 1);
 	dmxFrameBuffer[2] = !(data & (1 << 1));
 	dmxFrameBuffer[3] = !(data & (1 << 2));
