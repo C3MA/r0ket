@@ -3,6 +3,8 @@
 
 #define DMX_FORMAT_MAX	20
 
+#define DMX_BREAK	0
+#define MARK	1
 
 /* define some constants for the reset */
 #define COUNTER_RESET_END	400
@@ -60,6 +62,7 @@ extern void dmx_start(void) {
 	/* FIXME debug stuff */
 	dmxChannelBuffer[0] = 0x00; // red
 	dmxChannelBuffer[1] = 0xFF; // green
+#if 0
 	dmxChannelBuffer[2] = 0x00; // blue
 	dmxChannelBuffer[3] = 0x00;
 	dmxChannelBuffer[4] = 0xFF;
@@ -68,7 +71,7 @@ extern void dmx_start(void) {
 	dmxChannelBuffer[7] = 0xFF;
 	dmxChannelBuffer[8] = 0xFF;
 	dmxChannelBuffer[9] = 0xFF;
-	
+#endif
 }
 
 extern void dmx_stop(void) {
@@ -81,14 +84,14 @@ extern void dmx_stop(void) {
 void buildDMXframe(uint8_t data)
 {
 	dmxFrameBuffer[0] = 0; /* Startbit */
-	dmxFrameBuffer[1] = (data & 1);
-	dmxFrameBuffer[2] = (data & (1 << 1));
-	dmxFrameBuffer[3] = (data & (1 << 2));
-	dmxFrameBuffer[4] = (data & (1 << 3));
-	dmxFrameBuffer[5] = (data & (1 << 4));
-	dmxFrameBuffer[6] = (data & (1 << 5));
-	dmxFrameBuffer[7] = (data & (1 << 6));
-	dmxFrameBuffer[8] = (data & (1 << 7));
+	dmxFrameBuffer[1] = !(data & 1);
+	dmxFrameBuffer[2] = !(data & (1 << 1));
+	dmxFrameBuffer[3] = !(data & (1 << 2));
+	dmxFrameBuffer[4] = !(data & (1 << 3));
+	dmxFrameBuffer[5] = !(data & (1 << 4));
+	dmxFrameBuffer[6] = !(data & (1 << 5));
+	dmxFrameBuffer[7] = !(data & (1 << 6));
+	dmxFrameBuffer[8] = !(data & (1 << 7));
 	dmxFrameBuffer[9] = 1; /* Stoppbit */
 	dmxFrameBuffer[10] = 1; /* Stoppbit */
 	
@@ -113,12 +116,12 @@ void handler(void)
 	if (resetCounter < COUNTER_RESET_END)
 	{
 		/* reset of minimum 88us */
-		gpioSetValue(RB_SPI_SS0, 0);
+		gpioSetValue(RB_SPI_SS0, MARK);
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
 		/* mark of 8us */
-		gpioSetValue(RB_SPI_SS0, 1);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
@@ -142,7 +145,7 @@ void handler(void)
 		resetCounter = 0;
 		return;
 	} else if (resetCounter >= COUNTER_POSTMARK) {
-		gpioSetValue(RB_SPI_SS0, 1);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 		
@@ -153,7 +156,7 @@ void handler(void)
 			/* reset frame pointer */
 			framePtr = 0;
 			
-			if (channelPtr >= DMX_FORMAT_MAX) {
+			if (channelPtr >= 20) {
 				resetCounter = COUNTER_POSTMARK; /* jump to the end and build the end-mark */
 				return;
 			}
@@ -166,9 +169,9 @@ void handler(void)
 	
 	//	gpioSetValue(RB_SPI_SS0, dmxFrameBuffer[framePtr]);
 	if (dmxFrameBuffer[framePtr] > 0) {
-		gpioSetValue(RB_SPI_SS0, 1);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 	} else {
-		gpioSetValue(RB_SPI_SS0, 0);
+		gpioSetValue(RB_SPI_SS0, MARK);
 	}
 	
 	

@@ -4,7 +4,8 @@
 
 #include <sysinit.h>
 
-#define DMX_CHANNEL_MAX 512
+//#define DMX_CHANNEL_MAX 512
+#define DMX_CHANNEL_MAX 10
 
 /*
  * This function starts the dmx_timer and sets up all needed register.
