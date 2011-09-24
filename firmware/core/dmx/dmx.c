@@ -5,6 +5,7 @@
  * that descibes one byte including start-bit, stop-bits 
  * and mark between two bytes/channel (intertigit) */
 #define DMX_FORMAT_MAX	20
+#define DMX_FORMAT_WITHOUT_INTERFRAMESPACE	11
 
 #define DMX_BREAK	0
 #define DMX_MARK	1
@@ -12,7 +13,7 @@
 /****** define some constants for the reset; IMPORTANT: on tick = 4us *******/
 #define COUNTER_RESET_END	400				/* Last tick of RESET */ 
 #define COUNTER_MARK_END	(COUNTER_RESET_END + 100)	/* Last tick of the MARK */
-#define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_MAX) + 1
+#define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE) + 1
 
 #define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* first tick of the end of a frame */
 #define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* last tick of the end of a frame */
@@ -64,10 +65,10 @@ extern void dmx_start(void) {
 	
 	/* FIXME debug stuff */
 	dmxChannelBuffer[0] = 0x00; // red
-	dmxChannelBuffer[1] = 0xFF; // green
-	dmxChannelBuffer[2] = 0xAA; // blue
+	dmxChannelBuffer[1] = 0x00; // green
+	dmxChannelBuffer[2] = 0xFF; // blue
+	dmxChannelBuffer[3] = 0xAA; // blue
 #if 0
-	dmxChannelBuffer[3] = 0x00;
 	dmxChannelBuffer[4] = 0xFF;
 	dmxChannelBuffer[5] = 0x00;
 	dmxChannelBuffer[6] = 0xFF;
@@ -132,9 +133,9 @@ void handler(void)
 		framePtr = 0; /* send the stop-bit */
 		resetCounter++;
 	} else if (resetCounter >= (COUNTER_MARK_END + 1) 
-			   && resetCounter < (COUNTER_MARK_END + DMX_FORMAT_MAX)) {
+			   && resetCounter < (COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE)) {
 		resetCounter++; /* Send the startbyte */
-	} else if (resetCounter == (COUNTER_MARK_END + DMX_FORMAT_MAX)) {		
+	} else if (resetCounter == (COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE)) {		
 		/* build first frame */		
 		channelPtr = 0;
 		framePtr = 0;
@@ -154,7 +155,7 @@ void handler(void)
 		
 	} else {
 		/* Handle normal state, when no start is used */		
-		if (framePtr >= 11) /* do not send an interdigit between two channels */
+		if (framePtr >= DMX_FORMAT_WITHOUT_INTERFRAMESPACE) /* do not send an interdigit between two channels */
 		{
 			/* reset frame pointer */
 			framePtr = 0;
