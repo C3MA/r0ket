@@ -9,13 +9,13 @@
 #define DMX_BREAK	0
 #define DMX_MARK	1
 
-/* define some constants for the reset */
-#define COUNTER_RESET_END	400
-#define COUNTER_MARK_END	(COUNTER_RESET_END + 100)	/* 100ticks -> 400us */
+/****** define some constants for the reset; IMPORTANT: on tick = 4us *******/
+#define COUNTER_RESET_END	400				/* Last tick of RESET */ 
+#define COUNTER_MARK_END	(COUNTER_RESET_END + 100)	/* Last tick of the MARK */
 #define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_MAX) + 1
 
-#define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* needed to mark the end of a package */
-#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* needed to mark the end of a package */
+#define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* first tick of the end of a frame */
+#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* last tick of the end of a frame */
 
 
 static uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX]; /*FIXME make it private */
@@ -65,8 +65,8 @@ extern void dmx_start(void) {
 	/* FIXME debug stuff */
 	dmxChannelBuffer[0] = 0x00; // red
 	dmxChannelBuffer[1] = 0xFF; // green
+	dmxChannelBuffer[2] = 0xAA; // blue
 #if 0
-	dmxChannelBuffer[2] = 0x00; // blue
 	dmxChannelBuffer[3] = 0x00;
 	dmxChannelBuffer[4] = 0xFF;
 	dmxChannelBuffer[5] = 0x00;
@@ -123,7 +123,6 @@ void handler(void)
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
-		/* mark of 8us */
 		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
@@ -144,22 +143,23 @@ void handler(void)
 		
 		/*-------------- this build a mark at the end between two packages -------*/		
 	} else if (resetCounter >= COUNTER_POSTMARK_END) { /* first check if the end has been reached */
-		/* Rest the counter and begin from the beginning */
+		/* Rest the counter and start from the beginning */
 		resetCounter = 0;
 		return;
 	} else if (resetCounter >= COUNTER_POSTMARK) {
+		/* build the mark between to frames until COUNTER_POSTMARK_END */
 		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 		
 	} else {
 		/* Handle normal state, when no start is used */		
-		if (framePtr >= 10)
+		if (framePtr >= DMX_FORMAT_MAX)
 		{
 			/* reset frame pointer */
 			framePtr = 0;
 			
-			if (channelPtr >= 20) {
+			if (channelPtr >= DMX_CHANNEL_MAX) {
 				resetCounter = COUNTER_POSTMARK; /* jump to the end and build the end-mark */
 				return;
 			}
@@ -176,7 +176,6 @@ void handler(void)
 	} else {
 		gpioSetValue(RB_SPI_SS0, DMX_MARK);
 	}
-	
 	
 	framePtr++;
 }
