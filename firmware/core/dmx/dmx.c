@@ -98,15 +98,15 @@ void buildDMXframe(uint8_t data)
 	dmxFrameBuffer[9] = 0;	/* Stoppbit */
 	dmxFrameBuffer[10] = 0;	/* Stoppbit */
 	
-	dmxFrameBuffer[11] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[12] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[13] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[14] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[15] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[16] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[17] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[18] = 0; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[19] = 0; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[11] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[12] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[13] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[14] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[15] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[16] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[17] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[18] = 1; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[19] = 1; /* MARK between two packages (Interdigit) */
 }
 
 void handler(void)
