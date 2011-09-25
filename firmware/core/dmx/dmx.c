@@ -130,7 +130,7 @@ void handler(void)
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
 		/* build the startbyte */
-		buildDMXframe(1); /* double negation ftw... so the zero will be a one */
+		buildDMXframe(0x00);
 		framePtr = 0; /* send the stop-bit */
 		resetCounter++;
 	} else if (resetCounter >= (COUNTER_MARK_END + 1) 
