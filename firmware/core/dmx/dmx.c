@@ -11,8 +11,8 @@
 #define DMX_MARK	0
 
 /****** define some constants for the reset; IMPORTANT: on tick = 4us *******/
-#define COUNTER_RESET_END	400				/* Last tick of RESET */ 
-#define COUNTER_MARK_END	(COUNTER_RESET_END + 100)	/* Last tick of the MARK */
+#define COUNTER_RESET_END	22				/* Last tick of RESET */ 
+#define COUNTER_MARK_END	(COUNTER_RESET_END + 2)	/* Last tick of the MARK */
 #define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE) + 1
 
 #define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* first tick of the end of a frame */
@@ -119,11 +119,11 @@ void handler(void)
 	if (resetCounter < COUNTER_RESET_END)
 	{
 		/* reset of minimum 88us */
-		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
+		gpioSetValue(RB_SPI_SS0, DMX_MARK);
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
-		gpioSetValue(RB_SPI_SS0, DMX_MARK);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
