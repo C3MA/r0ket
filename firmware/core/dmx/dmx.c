@@ -153,8 +153,10 @@ void handler(void)
 		return;
 		
 	} else {
-		/* Handle normal state, when no start is used */		
-		if (framePtr >= DMX_FORMAT_WITHOUT_INTERFRAMESPACE) /* do not send an interdigit between two channels */
+		/* Handle normal state, when no start or end is used, the channels must be transmitted */	
+		
+		/* FIXME: do not send an interdigit between two channels (others does this every 8 channel) */
+		if (framePtr >= DMX_FORMAT_WITHOUT_INTERFRAMESPACE)
 		{
 			/* reset frame pointer */
 			framePtr = 0;
