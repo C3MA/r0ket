@@ -7,8 +7,8 @@
 #define DMX_FORMAT_MAX	20
 #define DMX_FORMAT_WITHOUT_INTERFRAMESPACE	11
 
-#define DMX_BREAK	0
-#define DMX_MARK	1
+#define DMX_BREAK	1
+#define DMX_MARK	0
 
 /****** define some constants for the reset; IMPORTANT: on tick = 4us *******/
 #define COUNTER_RESET_END	400				/* Last tick of RESET */ 
@@ -18,7 +18,7 @@
 #define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* first tick of the end of a frame */
 #define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* last tick of the end of a frame */
 
-#define EXTR_LEVEL(a)			((a) < 0) ? DMX_BREAK : DMX_MARK
+#define EXTR_LEVEL(a)			((a) > 0) ? DMX_BREAK : DMX_MARK
 
 static uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX]; /*FIXME make it private */
 static uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
@@ -88,7 +88,7 @@ extern void dmx_stop(void) {
  @param[in] data  the byte that should be send. */
 void buildDMXframe(uint8_t data)
 {
-	dmxFrameBuffer[0] = DMX_BREAK; /* Startbit */
+	dmxFrameBuffer[0] = DMX_MARK; /* Startbit */
 	dmxFrameBuffer[1] = EXTR_LEVEL((data & 1));
 	dmxFrameBuffer[2] = EXTR_LEVEL((data & (1 << 1)));
 	dmxFrameBuffer[3] = EXTR_LEVEL((data & (1 << 2)));
@@ -97,18 +97,18 @@ void buildDMXframe(uint8_t data)
 	dmxFrameBuffer[6] = EXTR_LEVEL((data & (1 << 5)));
 	dmxFrameBuffer[7] = EXTR_LEVEL((data & (1 << 6)));
 	dmxFrameBuffer[8] = EXTR_LEVEL((data & (1 << 7)));
-	dmxFrameBuffer[9] =  DMX_MARK;	/* Stoppbit */
-	dmxFrameBuffer[10] = DMX_MARK;	/* Stoppbit */
+	dmxFrameBuffer[9] =  DMX_BREAK;	/* Stoppbit */
+	dmxFrameBuffer[10] = DMX_BREAK;	/* Stoppbit */
 	
-	dmxFrameBuffer[11] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[12] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[13] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[14] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[15] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[16] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[17] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[18] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[19] = DMX_MARK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[11] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[12] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[13] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[14] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[15] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[16] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[17] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[18] = DMX_BREAK; /* MARK between two packages (Interdigit) */
+	dmxFrameBuffer[19] = DMX_BREAK; /* MARK between two packages (Interdigit) */
 }
 
 void handler(void)
@@ -121,16 +121,16 @@ void handler(void)
 	if (resetCounter < COUNTER_RESET_END)
 	{
 		/* reset of minimum 88us */
-		gpioSetValue(RB_SPI_SS0, DMX_MARK);
+		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
-		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
+		gpioSetValue(RB_SPI_SS0, DMX_MARK);
 		resetCounter++;
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
 		/* build the startbyte */
-		buildDMXframe(0); /* double negation ftw... so the zero will be a one */
+		buildDMXframe(1); /* double negation ftw... so the zero will be a one */
 		framePtr = 0; /* send the stop-bit */
 		resetCounter++;
 	} else if (resetCounter >= (COUNTER_MARK_END + 1) 
