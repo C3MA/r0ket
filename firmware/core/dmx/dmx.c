@@ -65,18 +65,16 @@ extern void dmx_start(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 	
 	/* FIXME debug stuff */
-	dmxChannelBuffer[0] = 0x00; // red
-	dmxChannelBuffer[1] = 0x00; // green
+	dmxChannelBuffer[0] = 0xAA; // red
+	dmxChannelBuffer[1] = 0xAA; // green
 	dmxChannelBuffer[2] = 0xFF; // blue
-	dmxChannelBuffer[3] = 0xAA; // blue
-#if 0
+	dmxChannelBuffer[3] = 0xAA;
 	dmxChannelBuffer[4] = 0xFF;
 	dmxChannelBuffer[5] = 0x00;
 	dmxChannelBuffer[6] = 0xFF;
 	dmxChannelBuffer[7] = 0xFF;
 	dmxChannelBuffer[8] = 0xFF;
 	dmxChannelBuffer[9] = 0xFF;
-#endif
 }
 
 extern void dmx_stop(void) {
