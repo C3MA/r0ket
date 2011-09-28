@@ -114,7 +114,7 @@ void handler(void)
 	static int channelPtr=0;
 	static int framePtr = 0;
 	static int resetCounter = 0;
-	static int nextPinState = 0;
+	static int nextPinState = DMX_BREAK;
 	
 	/* set the level at the pin */
 	gpioSetValue(RB_SPI_SS0, nextPinState);	
@@ -168,6 +168,7 @@ void handler(void)
 			
 			if (channelPtr >= DMX_CHANNEL_MAX) {
 				resetCounter = COUNTER_POSTMARK; /* jump to the end and build the end-mark */
+				nextPinState = DMX_MARK; /* build the mark between to frames */
 				return;
 			}
 			buildDMXframe(dmxChannelBuffer[channelPtr++]);
