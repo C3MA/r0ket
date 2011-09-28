@@ -16,7 +16,7 @@
 #define COUNTER_PREAMPLE_END	(COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE) + 1
 
 #define COUNTER_POSTMARK	(COUNTER_PREAMPLE_END + 10) /* first tick of the end of a frame */
-#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 100) /* last tick of the end of a frame */
+#define COUNTER_POSTMARK_END	(COUNTER_POSTMARK + 50) /* last tick of the end of a frame */
 
 #define EXTR_LEVEL(a)			(((a) > 0) ? DMX_MARK : DMX_BREAK)
 
@@ -65,16 +65,16 @@ extern void dmx_start(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 	
 	/* FIXME debug stuff */
-	dmxChannelBuffer[0] = 0xAA; // red
-	dmxChannelBuffer[1] = 0xAA; // green
+	dmxChannelBuffer[0] = 0xFF; // red
+	dmxChannelBuffer[1] = 0x05; // green
 	dmxChannelBuffer[2] = 0xFF; // blue
-	dmxChannelBuffer[3] = 0xAA;
+	dmxChannelBuffer[3] = 0x05;
 	dmxChannelBuffer[4] = 0xFF;
-	dmxChannelBuffer[5] = 0x00;
+	dmxChannelBuffer[5] = 0x05;
 	dmxChannelBuffer[6] = 0xFF;
-	dmxChannelBuffer[7] = 0xFF;
+	dmxChannelBuffer[7] = 0x05;
 	dmxChannelBuffer[8] = 0xFF;
-	dmxChannelBuffer[9] = 0xFF;
+	dmxChannelBuffer[9] = 0x05;
 }
 
 extern void dmx_stop(void) {

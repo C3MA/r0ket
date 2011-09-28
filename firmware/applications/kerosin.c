@@ -20,6 +20,7 @@ volatile unsigned int lastTick;
 
 #include "systick/systick.h" /* needed for active waiting */
 
+static void extractOlpeV2(uint8_t* inputbuffer, uint8_t bufferSize ,uint8_t* dmxUniverse, uint8_t* complete/*flag*/);
 
 void main_kerosin(void) {
 
@@ -59,7 +60,7 @@ void main_kerosin(void) {
 #endif
 	  // Printf can now be used with UART or USBCDC
 	
-	puts("Hello World");
+	puts("--- DMX first test ---\r\n");
 
 	
 	DoString(10, 25, "Enter:");
@@ -90,28 +91,28 @@ void main_kerosin(void) {
 				switch (enterCnt % 4)
 				{
 					case 1:
-						DoString(1, 50, "RED              ");
+						DoString(1, 40, "RED              ");
 						channelBuffer[0] = 0xFF; // red
 						channelBuffer[1] = 0x00; // green
 						channelBuffer[2] = 0x00; // blue
 						channelBuffer[3] = 0x00; // empty
 						break;
 					case 2:
-						DoString(1, 50, "GREEN              ");
+						DoString(1, 40, "GREEN              ");
 						channelBuffer[0] = 0x00; // red
 						channelBuffer[1] = 0xFF; // green
 						channelBuffer[2] = 0x00; // blue
 						channelBuffer[3] = 0x00; // empty
 						break;
 					case 3:
-						DoString(1, 50, "BLUE              ");
+						DoString(1, 40, "BLUE              ");
 						channelBuffer[0] = 0x00; // red
 						channelBuffer[1] = 0x00; // green
 						channelBuffer[2] = 0xFF; // blue
 						channelBuffer[3] = 0xFF; // empty
 						break;						
 					case 0:
-						DoString(1, 50, "MIXED              ");
+						DoString(1, 40, "MIXED              ");
 						channelBuffer[0] = 0xAA; // red
 						channelBuffer[1] = 0x00; // green
 						channelBuffer[2] = 0xFF; // blue
@@ -123,9 +124,14 @@ void main_kerosin(void) {
 				lcdDisplay();				
 				break;
 			case BTN_LEFT:
-				readData = CDC_GetInputBuffer(buffer, sizeof(buffer));				
-				DoString(5, 40, buffer);
-				DoString(1, 50, "RX-Cnt:");
+				readData = CDC_GetInputBuffer(buffer, sizeof(buffer));
+				uint8_t dmxUniverseDummy[10];
+				memset(dmxUniverseDummy, 0, 10);
+				uint8_t readyFlag = 0;
+				extractOlpeV2(buffer, readData, dmxUniverseDummy, &readyFlag);
+				DoString(1, 40, "RX                  ");
+				DoString(1, 40, dmxUniverseDummy);
+				DoString(1, 50, "RX-Cnt:     ");
 				DoInt(60, 50, readData);
 				lcdDisplay();
 				break;
@@ -149,6 +155,46 @@ void main_kerosin(void) {
 	}
 	
 	dmx_stop();
+}
+
+static void extractOlpeV2(uint8_t* inputbuffer, uint8_t bufferSize,
+						  uint8_t* dmxUniverse, uint8_t* complete/*flag*/)
+{
+	int i = 0;
+	static int value = -1; //value
+	static int channel = -1; //channel
+	(*complete) = 0; /* set the flag, that the universe is not complete */
+	
+	for (i=0; i < bufferSize; i++) {
+		if (inputbuffer[i] == 'o' && ((i + 1) < bufferSize) && inputbuffer[i + 1] == 'p')
+		{
+			channel = 1; /* light people start counting with 1 */
+		}
+		/* when a signal was found */
+		if (channel > 0)
+		{
+			if (inputbuffer[i] == 'o' && ((i + 1) < bufferSize) && inputbuffer[i + 1] == 'o')
+			{
+				dmxUniverse[channel] = 'o';
+			} 
+			else if (inputbuffer[i] != 'o') 
+			{
+				dmxUniverse[channel] = inputbuffer[i];
+			} 
+			else 
+			{
+				channel = -1;
+				continue;
+			}
+			channel++; /* have a look at the next byte */
+		}
+		
+		if (channel > 512)
+		{
+			channel = -1;
+			(*complete) = 1;
+		}
+	}	
 }
 
 #ifdef CFG_USBCDC
