@@ -1,4 +1,3 @@
-
 #ifndef _H_DMX
 #define	_H_DMX
 
@@ -6,6 +5,15 @@
 
 //#define DMX_CHANNEL_MAX 512
 #define DMX_CHANNEL_MAX 10
+
+typedef struct
+{
+  unit16_t No_channels;
+	unit8_t channels[512];
+} dmx_frame_t;
+
+extern void dmx_init(void);
+extern void dmx_deinit(void);
 
 /*
  * This function starts the dmx_timer and sets up all needed register.
@@ -39,5 +47,6 @@ extern void dmx_setLightBox(int box, uint8_t red, uint8_t green, uint8_t blue);
  * (You should know, what you do... sometimes ;-) )
  */
 extern void dmx_getDMXbuffer(uint8_t** ppBuffer);
+
 
 #endif
