@@ -69,7 +69,7 @@ void main_kerosin(void) {
 	dmx_getDMXbuffer(&channelBuffer);
 	
 	dmx_start();
-	DoString(1, 50, "Time enabled!");
+	DoString(1, 50, "DMX started");
 	lcdDisplay();
 	/* ---------------------------------------------- */
 
