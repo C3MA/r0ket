@@ -114,16 +114,22 @@ void handler(void)
 	static int channelPtr=0;
 	static int framePtr = 0;
 	static int resetCounter = 0;
+	static int nextPinState = 0;
+	
+	/* set the level at the pin */
+	gpioSetValue(RB_SPI_SS0, nextPinState);	
+	
+	/* -------- calculated the next byte ---------- */ 
 	
 	/* make the reset flag */
 	if (resetCounter < COUNTER_RESET_END)
 	{
 		/* reset of minimum 88us */
-		gpioSetValue(RB_SPI_SS0, DMX_BREAK);
+		nextPinState = DMX_BREAK;
 		resetCounter++;
 		return;
 	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
-		gpioSetValue(RB_SPI_SS0, DMX_MARK);
+		nextPinState = DMX_MARK;
 		resetCounter++;
 		return;
 	} else if (resetCounter == COUNTER_MARK_END){
@@ -148,10 +154,9 @@ void handler(void)
 		return;
 	} else if (resetCounter >= COUNTER_POSTMARK) {
 		/* build the mark between to frames until COUNTER_POSTMARK_END */
-		gpioSetValue(RB_SPI_SS0, DMX_MARK);
+		nextPinState = DMX_MARK;
 		resetCounter++;
 		return;
-		
 	} else {
 		/* Handle normal state, when no start or end is used, the channels must be transmitted */	
 		
@@ -168,7 +173,7 @@ void handler(void)
 			buildDMXframe(dmxChannelBuffer[channelPtr++]);
 		}
 	}
-	/* set the level at the pin */
-	gpioSetValue(RB_SPI_SS0, dmxFrameBuffer[framePtr]);	
+	/* store the calculated value und send it in the next cycle */
+	nextPinState = dmxFrameBuffer[framePtr];
 	framePtr++;
 }
