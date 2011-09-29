@@ -42,7 +42,7 @@ inline void swap_frame(dmx_frame_t *frame)
 
 extern void dmx_getDMXbuffer(uint8_t** ppBuffer)
 {
-	uint8_t *pbuffer = dmxChannelBuffer;
+	uint8_t *pbuffer = dmx_next_frame.channels;
 	(*ppBuffer) = pbuffer;
 }
 
@@ -77,13 +77,18 @@ extern void dmx_init(void)
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 }
+
+extern void dmx_init(void)
+{
+    NVIC_DisableIRQ(TIMER_32_0_IRQn);
+    TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
+}
 extern void dmx_start(void) {
-    dmx_mode = start;
+    dmx_mode = Continous;
 }
 
 extern void dmx_stop(void) {
-    NVIC_DisableIRQ(TIMER_32_0_IRQn);
-    TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
+    dmx_mode = Off;
 }
 
 void handler(void)
