@@ -12,6 +12,8 @@ typedef struct
 	unit8_t channels[512];
 } dmx_frame_t;
 
+extern void dmx_init(void)
+
 /*
  * This function starts the dmx_timer and sets up all needed register.
  */
