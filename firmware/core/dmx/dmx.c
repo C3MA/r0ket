@@ -68,7 +68,7 @@ extern void dmx_start(void) {
 	dmxChannelBuffer[0] = 0xFF; // red
 	dmxChannelBuffer[1] = 0x05; // green
 	dmxChannelBuffer[2] = 0xFF; // blue
-	dmxChannelBuffer[3] = 0x05;
+	dmxChannelBuffer[3] = 0xFF;
 	dmxChannelBuffer[4] = 0xFF;
 	dmxChannelBuffer[5] = 0x05;
 	dmxChannelBuffer[6] = 0xFF;
