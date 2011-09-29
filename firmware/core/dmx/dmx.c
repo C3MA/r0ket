@@ -20,13 +20,25 @@
 
 #define EXTR_LEVEL(a)			(((a) > 0) ? DMX_MARK : DMX_BREAK)
 
+enum dmx_states_e { Idle, Reset, Stop, Start, Send };
+enum dmx_mode_e	{ Continous, Single, Off};
+
 static uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX]; /*FIXME make it private */
 static uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
+
+static dmx_frame_t dmx_next_frame;
+static uint8_t dmx_frame_ready = 00;
+static dmx_mode_e dmx_mode = Off;
 
 /* Use the 32bit timer for the DMX signal generation */
 #include "core/timer32/timer32.h"
 
 void handler(void);
+
+inline void swap_frame(dmx_frame_t *frame)
+{
+	*frame = dmx_next_frame;
+}
 
 extern void dmx_getDMXbuffer(uint8_t** ppBuffer)
 {
@@ -40,7 +52,7 @@ extern void dmx_setChannel(int channel, uint8_t value)
 		return;
 	
 	/* correct channel could be set */
-	dmxChannelBuffer[channel] = value;
+	dmx_next_frame.channels[channel] = value;
 }
 
 extern void dmx_setLightBox(int box, uint8_t red, uint8_t green, uint8_t blue)
@@ -54,7 +66,8 @@ extern void dmx_setLightBox(int box, uint8_t red, uint8_t green, uint8_t blue)
 	dmx_setChannel((box * 4) + 2, blue);
 }
 
-extern void dmx_start(void) {
+extern void dmx_init(void)
+{
     timer32Callback0 = handler;
     
     /* Enable the clock for CT32B0 */
@@ -63,18 +76,9 @@ extern void dmx_start(void) {
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
-	
-	/* FIXME debug stuff */
-	dmxChannelBuffer[0] = 0xAA; // red
-	dmxChannelBuffer[1] = 0xAA; // green
-	dmxChannelBuffer[2] = 0xFF; // blue
-	dmxChannelBuffer[3] = 0xAA;
-	dmxChannelBuffer[4] = 0xFF;
-	dmxChannelBuffer[5] = 0x00;
-	dmxChannelBuffer[6] = 0xFF;
-	dmxChannelBuffer[7] = 0xFF;
-	dmxChannelBuffer[8] = 0xFF;
-	dmxChannelBuffer[9] = 0xFF;
+}
+extern void dmx_start(void) {
+    dmx_mode = start;
 }
 
 extern void dmx_stop(void) {
@@ -82,98 +86,87 @@ extern void dmx_stop(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
 }
 
-/* build the next frame, that should be send 
- @param[in] data  the byte that should be send. */
-void buildDMXframe(uint8_t data)
-{
-	dmxFrameBuffer[0] = DMX_BREAK; /* Startbit */
-	dmxFrameBuffer[1] = EXTR_LEVEL((data & 1));
-	dmxFrameBuffer[2] = EXTR_LEVEL((data & (1 << 1)));
-	dmxFrameBuffer[3] = EXTR_LEVEL((data & (1 << 2)));
-	dmxFrameBuffer[4] = EXTR_LEVEL((data & (1 << 3)));
-	dmxFrameBuffer[5] = EXTR_LEVEL((data & (1 << 4)));
-	dmxFrameBuffer[6] = EXTR_LEVEL((data & (1 << 5)));
-	dmxFrameBuffer[7] = EXTR_LEVEL((data & (1 << 6)));
-	dmxFrameBuffer[8] = EXTR_LEVEL((data & (1 << 7)));
-	dmxFrameBuffer[9] =  DMX_MARK;	/* Stoppbit */
-	dmxFrameBuffer[10] = DMX_MARK;	/* Stoppbit */
-	
-	dmxFrameBuffer[11] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[12] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[13] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[14] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[15] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[16] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[17] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[18] = DMX_MARK; /* MARK between two packages (Interdigit) */
-	dmxFrameBuffer[19] = DMX_MARK; /* MARK between two packages (Interdigit) */
-}
-
 void handler(void)
 {
-	static int channelPtr=0;
-	static int framePtr = 0;
-	static int resetCounter = 0;
-	static int nextPinState = 0;
+	static dmx_frame_t dmx_frame;
+	static dmx_states_e state = Idle;
+	static uint8_t counter;
+	static uint16_t channelCounter;
+	static uint8_t current_channel;
 	
-	/* set the level at the pin */
-	gpioSetValue(RB_SPI_SS0, nextPinState);	
+	static char out = 0; 
 	
-	/* -------- calculated the next byte ---------- */ 
+	gpioSetValue(RB_SPI_SS0, out);	
 	
-	/* make the reset flag */
-	if (resetCounter < COUNTER_RESET_END)
+	switch(state)
 	{
-		/* reset of minimum 88us */
-		nextPinState = DMX_BREAK;
-		resetCounter++;
-		return;
-	} else if (resetCounter >= COUNTER_RESET_END && resetCounter < COUNTER_MARK_END) {
-		nextPinState = DMX_MARK;
-		resetCounter++;
-		return;
-	} else if (resetCounter == COUNTER_MARK_END){
-		/* build the startbyte */
-		buildDMXframe(0x00);
-		framePtr = 0; /* send the stop-bit */
-		resetCounter++;
-	} else if (resetCounter >= (COUNTER_MARK_END + 1) 
-			   && resetCounter < (COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE)) {
-		resetCounter++; /* Send the startbyte */
-	} else if (resetCounter == (COUNTER_MARK_END + DMX_FORMAT_WITHOUT_INTERFRAMESPACE)) {		
-		/* build first frame */		
-		channelPtr = 0;
-		framePtr = 0;
-		buildDMXframe(dmxChannelBuffer[channelPtr++]);
-		resetCounter = COUNTER_PREAMPLE_END; /* leave the beginning (reset and start byte) */
-		
-		/*-------------- this build a mark at the end between two packages -------*/		
-	} else if (resetCounter >= COUNTER_POSTMARK_END) { /* first check if the end has been reached */
-		/* Rest the counter and start from the beginning */
-		resetCounter = 0;
-		return;
-	} else if (resetCounter >= COUNTER_POSTMARK) {
-		/* build the mark between to frames until COUNTER_POSTMARK_END */
-		nextPinState = DMX_MARK;
-		resetCounter++;
-		return;
-	} else {
-		/* Handle normal state, when no start or end is used, the channels must be transmitted */	
-		
-		/* FIXME: do not send an interdigit between two channels (others does this every 8 channel) */
-		if (framePtr >= DMX_FORMAT_WITHOUT_INTERFRAMESPACE)
-		{
-			/* reset frame pointer */
-			framePtr = 0;
-			
-			if (channelPtr >= DMX_CHANNEL_MAX) {
-				resetCounter = COUNTER_POSTMARK; /* jump to the end and build the end-mark */
-				return;
+		case(Idle):
+			out = 1;
+			switch(dmx_mode)
+			{
+				case(Off):
+					break;
+				case(Single):
+					if(dmx_frame_ready)
+					{
+						swap_frame(&dmx_frame);
+						state = Reset;
+						counter = 0;
+					}
+					break;
+				case(Continous);
+					swap_frame(&dmx_frame);
+					state = Reset;
+					counter = 0;
+					break;
 			}
-			buildDMXframe(dmxChannelBuffer[channelPtr++]);
-		}
+			break;
+		case(Reset):
+			out = 0;
+			if(++counter >= COUNTER_RESET_END)
+			{
+				state = stop;
+				channel_counter = -1;
+				counter = 0;
+			}
+			break;
+		case(Stop):
+			out = 1;
+			if(counter++ >= 1)
+			{
+				state = start
+				channel_counter++;
+				if(channel_counter == 0)
+				{
+					current_channel = 0x00; 
+					state = Send;
+				}
+				elseif (channel_counter > dmx_frame.No_channels)
+				{
+					state = Idle;
+				}
+				else
+				{
+					current_channel = dmx_frame.channels[current_channel-1];
+					state = Send;
+				}
+			}
+			break;
+		case(Start):
+			out = 0;
+			state = Send;
+			counter = 0;
+			break;
+		case(Send)
+			out = current_channel & 0x80;
+			current_channel <<= 1;
+			if(++counter >= 8)
+			{
+				state = Stop;
+				counter = 0;
+			}
+			break;
 	}
-	/* store the calculated value und send it in the next cycle */
-	nextPinState = dmxFrameBuffer[framePtr];
-	framePtr++;
 }
+
+
