@@ -13,12 +13,7 @@ void main_kerosinBasic(void) {
 	uint8_t enterCnt = 0;
 	uint8_t buffer[64];
 	
-//	cpuInit();                                // Configure the CPU already done in the startup-function
-	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
-	gpioInit();                               // Enable GPIO
-//	pmuInit();                                // Configure power management
-	adcInit();                                // Config adc pins to save power
-		
+	gpioInit();                               // Enable GPIO		
 	
 	uint8_t* channelBuffer;
 	dmx_getDMXbuffer(&channelBuffer);
