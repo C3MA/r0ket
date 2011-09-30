@@ -161,7 +161,7 @@ void handler(void)
 				}
 				else
 				{
-					current_channel = dmx_frame.channels[current_channel-1];
+					current_channel = dmx_frame.channels[channel_counter-1];
 					state = Start;
 				}
 			}
