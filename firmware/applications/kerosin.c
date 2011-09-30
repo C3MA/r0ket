@@ -69,6 +69,7 @@ void main_kerosin(void) {
 	uint8_t* channelBuffer;
 	dmx_getDMXbuffer(&channelBuffer);
 	
+	dmx_init();
 	dmx_start();
 	DoString(1, 50, "DMX started");
 	lcdDisplay();
@@ -99,10 +100,7 @@ void main_kerosin(void) {
 						break;
 					case 2:
 						DoString(1, 40, "GREEN              ");
-						channelBuffer[0] = 0x00; // red
-						channelBuffer[1] = 0xFF; // green
-						channelBuffer[2] = 0x00; // blue
-						channelBuffer[3] = 0x00; // empty
+						dmx_setLightBox(0, 0x00, 0xFF, 0x00);
 						break;
 					case 3:
 						DoString(1, 40, "BLUE              ");

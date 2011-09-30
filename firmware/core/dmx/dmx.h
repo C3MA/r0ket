@@ -2,14 +2,15 @@
 #define	_H_DMX
 
 #include <sysinit.h>
+#include <stdint.h>
 
 //#define DMX_CHANNEL_MAX 512
 #define DMX_CHANNEL_MAX 10
 
 typedef struct
 {
-  unit16_t No_channels;
-	unit8_t channels[512];
+	uint16_t No_channels;
+	uint8_t channels[512];
 } dmx_frame_t;
 
 extern void dmx_init(void);

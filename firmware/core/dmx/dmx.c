@@ -20,30 +20,22 @@
 
 #define EXTR_LEVEL(a)			(((a) > 0) ? DMX_MARK : DMX_BREAK)
 
-enum dmx_states_e { Idle, Reset, Stop, Start, Send };
-enum dmx_mode_e	{ Continous, Single, Off};
-
-static uint8_t dmxChannelBuffer[DMX_CHANNEL_MAX]; /*FIXME make it private */
-static uint8_t dmxFrameBuffer[DMX_FORMAT_MAX];
+typedef enum dmx_states_e { Idle, Reset, Stop, Start, Send } dmx_states_t;
+typedef enum dmx_mode_e	{ Continous, Single, Off} dmx_mode_t;
 
 static dmx_frame_t dmx_next_frame;
 static uint8_t dmx_frame_ready = 00;
-static dmx_mode_e dmx_mode = Off;
+static dmx_mode_t dmx_mode = Off;
 
 /* Use the 32bit timer for the DMX signal generation */
 #include "core/timer32/timer32.h"
 
 void handler(void);
 
-inline void swap_frame(dmx_frame_t *frame)
-{
-	*frame = dmx_next_frame;
-}
-
 extern void dmx_getDMXbuffer(uint8_t** ppBuffer)
 {
-	uint8_t *pbuffer = dmx_next_frame.channels;
-	(*ppBuffer) = pbuffer;
+//	uint8_t *pbuffer = dmx_next_frame.channels;
+	(*ppBuffer) = dmx_next_frame.channels;
 }
 
 extern void dmx_setChannel(int channel, uint8_t value)
@@ -78,13 +70,25 @@ extern void dmx_init(void)
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 }
 
-extern void dmx_init(void)
+extern void dmx_deinit(void)
 {
     NVIC_DisableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_DISABLED;
 }
+
 extern void dmx_start(void) {
+	timer32Callback0 = handler;
+    
+    /* Enable the clock for CT32B0 */
+    SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
+    TMR_TMR32B0MR0  = 288; /*(72E6/250E3); frequency of 250kBit/s -> bit time of 4us */
+    TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
+    NVIC_EnableIRQ(TIMER_32_0_IRQn);
+    TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
     dmx_mode = Continous;
+	
+	dmx_next_frame.No_channels = 4;
+	dmx_next_frame.channels[0] = 0xFF; /* DEBUG */
 }
 
 extern void dmx_stop(void) {
@@ -94,14 +98,14 @@ extern void dmx_stop(void) {
 void handler(void)
 {
 	static dmx_frame_t dmx_frame;
-	static dmx_states_e state = Idle;
+	static dmx_states_t state = Idle;
 	static uint8_t counter;
-	static uint16_t channelCounter;
+	static uint16_t channel_counter = 0;
 	static uint8_t current_channel;
 	
-	static char out = 0; 
+	static uint8_t out = 0; 
 	
-	gpioSetValue(RB_SPI_SS0, out);	
+	gpioSetValue(RB_SPI_SS0, out);
 	
 	switch(state)
 	{
@@ -109,20 +113,25 @@ void handler(void)
 			out = 1;
 			switch(dmx_mode)
 			{
-				case(Off):
-					break;
 				case(Single):
 					if(dmx_frame_ready)
 					{
-						swap_frame(&dmx_frame);
+						/* swap_frame */
+						dmx_frame = dmx_next_frame;
+						
 						state = Reset;
 						counter = 0;
 					}
 					break;
-				case(Continous);
-					swap_frame(&dmx_frame);
+				case(Continous):
+					/* swap_frame */
+					dmx_frame = dmx_next_frame;
+
 					state = Reset;
 					counter = 0;
+					break;
+				default:
+				case(Off):
 					break;
 			}
 			break;
@@ -130,7 +139,7 @@ void handler(void)
 			out = 0;
 			if(++counter >= COUNTER_RESET_END)
 			{
-				state = stop;
+				state = Stop;
 				channel_counter = -1;
 				counter = 0;
 			}
@@ -139,21 +148,21 @@ void handler(void)
 			out = 1;
 			if(counter++ >= 1)
 			{
-				state = start
+				state = Start;
 				channel_counter++;
 				if(channel_counter == 0)
 				{
 					current_channel = 0x00; 
-					state = Send;
+					state = Start;
 				}
-				elseif (channel_counter > dmx_frame.No_channels)
+				else if (channel_counter > dmx_frame.No_channels)
 				{
 					state = Idle;
 				}
 				else
 				{
 					current_channel = dmx_frame.channels[current_channel-1];
-					state = Send;
+					state = Start;
 				}
 			}
 			break;
@@ -162,9 +171,9 @@ void handler(void)
 			state = Send;
 			counter = 0;
 			break;
-		case(Send)
-			out = current_channel & 0x80;
-			current_channel <<= 1;
+		case(Send):
+			out = current_channel & 0x1;
+			current_channel >>= 1;
 			if(++counter >= 8)
 			{
 				state = Stop;
