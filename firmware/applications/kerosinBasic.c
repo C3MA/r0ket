@@ -1,6 +1,6 @@
 #include <sysinit.h>
 #include "core/dmx/dmx.h"
-
+#include "basic/basic.h"
 
 volatile unsigned int lastTick;
 #include "core/usbcdc/usb.h"
@@ -14,6 +14,8 @@ volatile unsigned int lastTick;
 #include "core/uart/uart.h"
 
 void main_kerosinBasic(void) {
+	uint8_t enterCnt = 0;
+	
 	gpioInit();                               // Enable GPIO		
 	
 	uint8_t* channelBuffer;
@@ -43,7 +45,51 @@ void main_kerosinBasic(void) {
 	/* ---------------------------------------------- */
 
 	while (1) {
-		
+		switch (getInput()) {
+			case BTN_ENTER:
+				enterCnt++;
+
+			switch (enterCnt % 4)
+			{
+				case 1:
+					puts("RED");
+					channelBuffer[0] = 0xFF; // red
+					channelBuffer[1] = 0x00; // green
+					channelBuffer[2] = 0x00; // blue
+					channelBuffer[3] = 0x00; // empty
+					break;
+				case 2:
+					puts("GREEN");
+					dmx_setLightBox(0, 0x00, 0xFF, 0x00);
+					break;
+				case 3:
+					puts("BLUE");
+					channelBuffer[0] = 0x00; // red
+					channelBuffer[1] = 0x00; // green
+					channelBuffer[2] = 0xFF; // blue
+					channelBuffer[3] = 0xFF; // empty
+					break;						
+				case 0:
+					puts("MIXED");
+					channelBuffer[0] = 0xAA; // red
+					channelBuffer[1] = 0x00; // green
+					channelBuffer[2] = 0xFF; // blue
+					channelBuffer[3] = 0xFF; // empty
+					break;						
+			}
+				break;
+			case BTN_LEFT:
+				break;
+			case BTN_DOWN:
+				break;
+			case BTN_UP:
+				dmx_setChannel(0,33);
+				dmx_setChannel(1, 33);
+				dmx_setChannel(2, 33);
+				break;
+			default:
+				break;
+		}
 	}
 	
 	dmx_stop();

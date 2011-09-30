@@ -107,14 +107,14 @@ void main_kerosin(void) {
 						channelBuffer[0] = 0x00; // red
 						channelBuffer[1] = 0x00; // green
 						channelBuffer[2] = 0xFF; // blue
-						channelBuffer[3] = 0xFF; // empty
+						channelBuffer[3] = 0x00; // empty
 						break;						
 					case 0:
 						DoString(1, 40, "MIXED              ");
 						channelBuffer[0] = 0xAA; // red
 						channelBuffer[1] = 0x00; // green
 						channelBuffer[2] = 0xFF; // blue
-						channelBuffer[3] = 0xFF; // empty
+						channelBuffer[3] = 0x00; // empty
 						break;						
 				}
 				
