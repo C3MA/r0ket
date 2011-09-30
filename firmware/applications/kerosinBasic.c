@@ -1,18 +1,7 @@
 #include <sysinit.h>
-#include "basic/basic.h"
-#include "lcd/render.h"
-#include "core/pmu/pmu.h"
-
 #include "core/dmx/dmx.h"
 
-#include "systick/systick.h" /* needed for active waiting */
-
-
 void main_kerosinBasic(void) {
-
-	uint8_t enterCnt = 0;
-	uint8_t buffer[64];
-	
 	gpioInit();                               // Enable GPIO		
 	
 	uint8_t* channelBuffer;
