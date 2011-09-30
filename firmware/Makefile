@@ -17,14 +17,14 @@ OBJS += table.o
 endif
 endif
 
-LIBS += lcd/liblcd.a
+#LIBS += lcd/liblcd.a
 LIBS += basic/libbasic.a
 LIBS += core/libcore.a
 LIBS += applications/libapp.a
-LIBS += filesystem/libfat.a
-LIBS += usb/libusb.a
-LIBS += funk/libfunk.a
-LIBS += usbcdc/libusbcdc.a
+#LIBS += filesystem/libfat.a
+#LIBS += usb/libusb.a
+#LIBS += funk/libfunk.a
+#LIBS += usbcdc/libusbcdc.a
 
 ##########################################################################
 # GNU GCC compiler flags
