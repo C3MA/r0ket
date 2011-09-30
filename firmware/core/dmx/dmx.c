@@ -87,8 +87,7 @@ extern void dmx_start(void) {
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
     dmx_mode = Continous;
 	
-	dmx_next_frame.No_channels = 4;
-	dmx_next_frame.channels[0] = 0xFF; /* DEBUG */
+	dmx_next_frame.No_channels = 512;
 }
 
 extern void dmx_stop(void) {
