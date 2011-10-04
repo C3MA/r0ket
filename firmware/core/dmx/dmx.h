@@ -49,5 +49,6 @@ extern void dmx_setLightBox(int box, uint8_t red, uint8_t green, uint8_t blue);
  */
 extern void dmx_getDMXbuffer(uint8_t** ppBuffer);
 
+extern void dmx_setHandler(void (*handleChars) (uint8_t* buffer));
 
 #endif

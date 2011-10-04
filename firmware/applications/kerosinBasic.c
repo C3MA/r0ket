@@ -9,7 +9,13 @@ volatile unsigned int lastTick;
 #include "core/usbcdc/cdcuser.h"
 #include "core/usbcdc/cdc_buf.h"
 
+uint8_t gCounter = 0;
+uint8_t gBuffer[2];
 
+void handleCharsWhileMark(uint8_t* buffer)
+{
+	uint8_t readData = CDC_GetInputBuffer(gBuffer, sizeof(gBuffer));
+}
 
 #include "core/uart/uart.h"
 
@@ -25,6 +31,7 @@ void main_kerosinBasic(void) {
 	channelBuffer[2] = 0x00; // blue
 	channelBuffer[3] = 0x00; // empty
 	
+	/************* Initialize USB UART *******************/
 	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
 	lastTick = systickGetTicks();   // Used to control output/printf timing
     CDC_Init();                     // Initialise VCOM
@@ -38,8 +45,12 @@ void main_kerosinBasic(void) {
 		systickDelay(10);             // Wait 10ms
 		usbTimeout++;
     }
+	/************* End Initialize USB UART *******************/
 	
 	dmx_init();
+	
+	dmx_setHandler(handleCharsWhileMark);
+	
 	dmx_start();
 	puts("--- DMX first test ---\r\n");
 	/* ---------------------------------------------- */
@@ -52,25 +63,21 @@ void main_kerosinBasic(void) {
 			switch (enterCnt % 4)
 			{
 				case 1:
-					puts("RED");
 					channelBuffer[0] = 0xFF; // red
 					channelBuffer[1] = 0x00; // green
 					channelBuffer[2] = 0x00; // blue
 					channelBuffer[3] = 0x00; // empty
 					break;
 				case 2:
-					puts("GREEN");
 					dmx_setLightBox(0, 0x00, 0xFF, 0x00);
 					break;
 				case 3:
-					puts("BLUE");
 					channelBuffer[0] = 0x00; // red
 					channelBuffer[1] = 0x00; // green
 					channelBuffer[2] = 0xFF; // blue
 					channelBuffer[3] = 0xFF; // empty
 					break;						
 				case 0:
-					puts("MIXED");
 					channelBuffer[0] = 0xAA; // red
 					channelBuffer[1] = 0x00; // green
 					channelBuffer[2] = 0xFF; // blue

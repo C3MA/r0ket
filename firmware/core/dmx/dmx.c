@@ -27,6 +27,9 @@ static dmx_frame_t dmx_next_frame;
 static uint8_t dmx_frame_ready = 00;
 static dmx_mode_t dmx_mode = Off;
 
+/* Callback function, that is called, when stuff could be done while STOP aka. MARK */
+static void (*handleCharsWhileMark) (uint8_t* buffer) = NULL;
+
 /* Use the 32bit timer for the DMX signal generation */
 #include "core/timer32/timer32.h"
 
@@ -153,6 +156,8 @@ void handler(void)
 				{
 					current_channel = dmx_frame.channels[channel_counter-1];
 					state = Start;
+					if (handleCharsWhileMark != NULL)
+						handleCharsWhileMark(dmx_next_frame.channels);
 				}
 			}
 			break;
@@ -173,4 +178,7 @@ void handler(void)
 	}
 }
 
-
+extern void dmx_setHandler(void (*handleChars) (uint8_t* buffer))
+{
+	handleCharsWhileMark = handleChars;
+}
