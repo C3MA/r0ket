@@ -1,13 +1,13 @@
 /**************************************************************************/
 /*! 
     @file     lpc134x.h
-    @author   K. Townsend (microBuilder.eu)
-    @date     22 March 2010
-    @version  0.10
+    @author   pcopfer
+    @date     08 October 2011
+    @version  0.11
 
 	@section DESCRIPTION
 
-    LPC1343 header file, based on V0.10 of the LPC1343 User Manual.
+    LPC1343 header file, based on Rev 3 of the LPC1343 User Manual.
 	
     @section LICENSE
 
@@ -2038,7 +2038,7 @@ static inline void NVIC_DisableIRQ(IRQn_t IRQn)
  priority: 0 high, 31 low for LPC13xx
  */
 
-static inline void void NVIC_SetPriority(IRQn_t IRQn, uint32_t priority)
+static inline void NVIC_SetPriority(IRQn_t IRQn, uint32_t priority)
 {
     NVIC->IP[(((uint32_t)(IRQn))/4)] = ((uint32_t)(priority) << (((((uint32_t)(IRQn))%4)*8)+7))
 }
