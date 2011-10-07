@@ -2026,6 +2026,24 @@ static inline void NVIC_DisableIRQ(IRQn_t IRQn)
   NVIC->ICER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F));
 }
 
+//ISPR
+//ICPR
+//IABR
+
+/* 
+ Set Priority for Interrupts
+ m = exeption number
+ IPR(m/4) 
+ byte offset: (((m%4)*8)+7)
+ priority: 0 high, 31 low for LPC13xx
+ */
+
+static inline void void NVIC_SetPriority(IRQn_t IRQn, uint32_t priority)
+{
+    NVIC->IP[(((uint32_t)(IRQn))/4)] = ((uint32_t)(priority) << (((((uint32_t)(IRQn))%4)*8)+7))
+}
+
+//STIR
 /*##############################################################################
 ## GPIO - General Purpose I/O
 ##############################################################################*/
