@@ -28,11 +28,11 @@ void main_kerosin(void) {
 	uint8_t buffer[64];
 	
 //	cpuInit();                                // Configure the CPU already done in the startup-function
-	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
+//	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
 	gpioInit();                               // Enable GPIO
-	pmuInit();                                // Configure power management
-	adcInit();                                // Config adc pins to save power
-	lcdInit();
+//	pmuInit();                                // Configure power management
+//	adcInit();                                // Config adc pins to save power
+//	lcdInit();
 		
     DoString(2,5,"USB");	
 	
