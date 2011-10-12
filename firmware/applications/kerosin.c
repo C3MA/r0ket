@@ -30,7 +30,7 @@ void main_kerosin(void) {
 //	cpuInit();                                // Configure the CPU already done in the startup-function
 	systickInit(CFG_SYSTICK_DELAY_IN_MS);     // Start systick timer
 	gpioInit();                               // Enable GPIO
-//	pmuInit();                                // Configure power management
+	pmuInit();                                // Configure power management
 	adcInit();                                // Config adc pins to save power
 	lcdInit();
 		

@@ -69,6 +69,14 @@ extern void dmx_init(void)
     SCB_SYSAHBCLKCTRL |= (SCB_SYSAHBCLKCTRL_CT32B0);
     TMR_TMR32B0MR0  = 288; /*(72E6/250E3); frequency of 250kBit/s -> bit time of 4us */
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
+	
+	/* Update the priority */
+	/* first WAKEUP0_IRQn is 0 ... last is EINT0_IRQn = 56 -> Hack to update all priority */
+	for (int i=0; i < 56; i++) {
+		NVIC_SetPriority(i, 0x1F);
+	}
+	NVIC_SetPriority(TIMER_32_0_IRQn, 0x0);
+	
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
 }
