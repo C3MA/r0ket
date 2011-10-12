@@ -72,10 +72,10 @@ extern void dmx_init(void)
 	
 	/* Update the priority */
 	/* first WAKEUP0_IRQn is 0 ... last is EINT0_IRQn = 56 -> Hack to update all priority */
-	for (int i=0; i < 56; i++) {
-		NVIC_SetPriority(i, 0x1F);
+	for (int i=0; i <= 56; i++) {
+		NVIC_SetPriority(i, 0x10);
 	}
-	NVIC_SetPriority(TIMER_32_0_IRQn, 0x0);
+	NVIC_SetPriority(TIMER_32_0_IRQn, 0x00);
 	
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;

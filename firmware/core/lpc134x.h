@@ -2040,7 +2040,7 @@ static inline void NVIC_DisableIRQ(IRQn_t IRQn)
 
 static inline void NVIC_SetPriority(IRQn_t IRQn, uint32_t priority)
 {
-    NVIC->IP[(((uint32_t)(IRQn))/4)] = ((uint32_t)(priority) << (((((uint32_t)(IRQn))%4)*8)+7));
+    NVIC->IP[(((uint32_t)(IRQn))/4)] |= (0x1F & ((uint32_t)(priority) << (((((uint32_t)(IRQn))%4)*8)+7)));
 }
 
 //STIR
