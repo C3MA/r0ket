@@ -70,6 +70,9 @@ extern void dmx_init(void)
     TMR_TMR32B0MR0  = 288; /*(72E6/250E3); frequency of 250kBit/s -> bit time of 4us */
     TMR_TMR32B0MCR = (TMR_TMR32B0MCR_MR0_INT_ENABLED | TMR_TMR32B0MCR_MR0_RESET_ENABLED);
 
+	
+	
+	
 	__disable_irq();
 	
 	/* Update the priority */
@@ -80,6 +83,13 @@ extern void dmx_init(void)
 	NVIC_SetPriority(TIMER_32_0_IRQn, 0x00);
 	
 	__enable_irq();
+	
+	
+	/* set demo color */
+	dmx_next_frame.channels[0] = 0x00; /* red */
+	dmx_next_frame.channels[1] = 0x00; /* green */
+	dmx_next_frame.channels[2] = 0xFF; /* blue */
+	
 	
     NVIC_EnableIRQ(TIMER_32_0_IRQn);
     TMR_TMR32B0TCR = TMR_TMR32B0TCR_COUNTERENABLE_ENABLED;
@@ -102,8 +112,6 @@ extern void dmx_stop(void) {
 
 void handler(void)
 {
-	
-	__disable_irq();
 	
 	static dmx_frame_t dmx_frame;
 	static dmx_states_t state = Idle;
@@ -192,7 +200,12 @@ void handler(void)
 			break;
 	}
 	
-	__enable_irq();
+
+	/* clear all pending interrupts */
+	for (int i=40; i <= 56; i++) {
+		if (i != 43)
+			NVIC_ClearPendingIRQ(i);
+	}
 }
 
 extern void dmx_setHandler(void (*handleChars) (uint8_t* buffer))

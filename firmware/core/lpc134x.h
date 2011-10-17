@@ -2030,7 +2030,7 @@ static inline void NVIC_DisableIRQ(IRQn_t IRQn)
 //ICPR
 static inline void NVIC_ClearPendingIRQ (IRQn_t IRQn)
 {
-    NVIC->ICPR[((unint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F));  
+    NVIC->ICPR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F));  
 }
 
 //IABR
