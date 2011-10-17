@@ -2034,13 +2034,13 @@ static inline void NVIC_DisableIRQ(IRQn_t IRQn)
  Set Priority for Interrupts
  m = exeption number
  IPR(m/4) 
- byte offset: (((m%4)*8)+7)
+ byte offset: (((m%4)*8)+3)
  priority: 0 high, 31 low for LPC13xx
  */
 
 static inline void NVIC_SetPriority(IRQn_t IRQn, uint32_t priority)
 {
-    NVIC->IP[(((uint32_t)(IRQn))/4)] |= (((uint32_t)(0x1F & priority) << (((((uint32_t)(IRQn))%4)*8)+7)));
+    NVIC->IP[((uint32_t)(((uint32_t)(IRQn))/4))] |= (((uint32_t)(0x1F & priority) << (((((uint32_t)(IRQn))%4)*8)+3)));
 }
 
 //STIR
