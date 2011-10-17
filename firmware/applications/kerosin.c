@@ -70,6 +70,7 @@ void main_kerosin(void) {
 	dmx_getDMXbuffer(&channelBuffer);
 	dmx_init();
 	dmx_start();
+	
 	DoString(1, 50, "DMX started");
 	lcdDisplay();
 	/* ---------------------------------------------- */
