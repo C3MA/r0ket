@@ -102,6 +102,9 @@ extern void dmx_stop(void) {
 
 void handler(void)
 {
+	
+		__disable_irq();
+	
 	static dmx_frame_t dmx_frame;
 	static dmx_states_t state = Idle;
 	static uint8_t counter;
@@ -188,6 +191,8 @@ void handler(void)
 			}
 			break;
 	}
+	
+	__enable_irq();
 }
 
 extern void dmx_setHandler(void (*handleChars) (uint8_t* buffer))
