@@ -2033,6 +2033,16 @@ static inline void NVIC_ClearPendingIRQ (IRQn_t IRQn)
     NVIC->ICPR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F));  
 }
 
+static inline void NVIC_ClearAllPendingIRQExcept (IRQn_t IRQn)
+{
+	for (int i=0; i < 8; i++) {
+		if (((IRQn) >> 5) == i)
+			NVIC->ICPR[i] = ~(1 << (IRQn));
+		else
+			NVIC->ICPR[i] = 1;
+	}
+}
+
 //IABR
 
 /* 
