@@ -2033,8 +2033,8 @@ static inline void NVIC_EnableIRQwod(IRQn_t IRQn)
 {
     NVIC_ISR0old = NVIC->ISER[0];
     NVIC_ISR1old = NVIC->ISER[1];
-    NVIC->ICER[0] = NVIC_ISR0old;
-    NVIC->ICER[1] = NVIC_ISR1old;
+    NVIC->ICER[0] = 0xFFFFFFFF;
+    NVIC->ICER[1] = 0xFFFFFFFF;
     NVIC_EnableIRQ(IRQn);
 }
 
