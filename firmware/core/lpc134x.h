@@ -2026,6 +2026,25 @@ static inline void NVIC_DisableIRQ(IRQn_t IRQn)
   NVIC->ICER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F));
 }
 
+static uint32_t NVIC_ISR0old;
+static uint32_t NVIC_ISR1old;
+
+static inline void NVIC_EnableIRQwod(IRQn_t IRQn)
+{
+    NVIC_ISR0old = NVIC->ISER[0];
+    NVIC_ISR1old = NVIC->ISER[1];
+    NVIC->ICER[0] = NVIC_ISR0old;
+    NVIC->ICER[1] = NVIC_ISR1old;
+    NVIC_EnableIRQ(IRQn);
+}
+
+static inline void NVIC_EnableIRQwoe(IRQn_t IRQn)
+{
+    NVIC_DisableIRQ(IRQn);
+    NVIC->ISER[0] = NVIC_ISR0old;
+    NVIC->ISER[1] = NVIC_ISR1old;
+}
+
 //ISPR
 //ICPR
 static inline void NVIC_ClearPendingIRQ (IRQn_t IRQn)
