@@ -202,7 +202,7 @@ void handler(void)
 	
 
 	/* clear all pending interrupts */
-	NVIC_ClearAllPendingIRQExcept(43);
+	//NVIC_ClearAllPendingIRQExcept(43);
 }
 
 extern void dmx_setHandler(void (*handleChars) (uint8_t* buffer))
