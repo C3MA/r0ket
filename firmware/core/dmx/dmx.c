@@ -72,18 +72,18 @@ extern void dmx_init(void)
 
 	
 	
-	
+	/*
 	__disable_irq();
 	
 	/* Update the priority */
 	/* first WAKEUP0_IRQn is 0 ... last is EINT0_IRQn = 56 -> Hack to update all priority */
-	for (int i=0; i <= 56; i++) {
+	/*for (int i=0; i <= 56; i++) {
 		NVIC_SetPriority(i, 0x0F);
 	}
 	NVIC_SetPriority(TIMER_32_0_IRQn, 0x00);
-	
+     
 	__enable_irq();
-	
+	*/
 	
 	/* set demo color */
 	dmx_next_frame.channels[0] = 0x00; /* red */
@@ -188,6 +188,7 @@ void handler(void)
 			out = 0;
 			state = Send;
 			counter = 0;
+            NVIC_EnableIRQwod(TIMER_32_0_IRQn);
 			break;
 		case(Send):
 			out = current_channel & 0x1;
@@ -196,13 +197,14 @@ void handler(void)
 			{
 				state = Stop;
 				counter = 0;
+                NVIC_EnableIRQwoe(TIMER_32_0_IRQn);
 			}
 			break;
 	}
 	
 
 	/* clear all pending interrupts */
-	NVIC_ClearAllPendingIRQExcept(43);
+	/*NVIC_ClearAllPendingIRQExcept(43);*/
 }
 
 extern void dmx_setHandler(void (*handleChars) (uint8_t* buffer))
